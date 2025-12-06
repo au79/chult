@@ -1,1 +1,682 @@
-!function(t){var e={};function n(i){if(e[i])return e[i].exports;var r=e[i]={i:i,l:!1,exports:{}};return t[i].call(r.exports,r,r.exports,n),r.l=!0,r.exports}n.m=t,n.c=e,n.d=function(t,e,i){n.o(t,e)||Object.defineProperty(t,e,{enumerable:!0,get:i})},n.r=function(t){"undefined"!=typeof Symbol&&Symbol.toStringTag&&Object.defineProperty(t,Symbol.toStringTag,{value:"Module"}),Object.defineProperty(t,"__esModule",{value:!0})},n.t=function(t,e){if(1&e&&(t=n(t)),8&e)return t;if(4&e&&"object"==typeof t&&t&&t.__esModule)return t;var i=Object.create(null);if(n.r(i),Object.defineProperty(i,"default",{enumerable:!0,value:t}),2&e&&"string"!=typeof t)for(var r in t)n.d(i,r,function(e){return t[e]}.bind(null,r));return i},n.n=function(t){var e=t&&t.__esModule?function(){return t.default}:function(){return t};return n.d(e,"a",e),e},n.o=function(t,e){return Object.prototype.hasOwnProperty.call(t,e)},n.p="",n(n.s=0)}([function(t,e,n){"use strict";n.r(e);n(1);!function(t){var e,n={touchend:function(){}};for(e in n)t.addEventListener(e,n)}(document);var i=document.querySelectorAll(".st0"),r=document.getElementById("reset");i.forEach((function(t,e){t.setAttribute("id",e),t.addEventListener("click",s)})),r.addEventListener("click",(function(){t="hex",document.cookie=t+"=; Path=/; Expires=Thu, 01 Jan 1970 00:00:01 GMT;",window.history.replaceState(null,null,window.location.pathname),i.forEach((function(t,e){t.classList.remove("off")})),o=[];var t}));var o=function(){var t=new URLSearchParams(window.location.search).get("show"),e=function(t){var e="; ".concat(document.cookie).split("; ".concat(t,"="));if(2===e.length)return e.pop().split(";").shift()}("hex"),n=[];e?n=e.split(","):t&&(n=t.split(","));for(var i=0;i<n.length;i++){var r=document.getElementById(n[i]);if(!r){a(n);break}r.classList.add("off")}return n}();function s(){var t,e=this.getAttribute("id");this.classList.contains("off")?(this.classList.remove("off"),t=e,o=o.filter((function(e){return e!=t}))):(this.classList.add("off"),o.push(e)),a(o),function(t,e){document.cookie=t+"="+e+"; Path=/;"}("hex",o.join())}function a(t){var e=window.location.protocol+"//"+window.location.host+window.location.pathname+"?show="+t;window.history.replaceState({path:e},"",e)}},function(t,e){function n(t){return(n="function"==typeof Symbol&&"symbol"==typeof Symbol.iterator?function(t){return typeof t}:function(t){return t&&"function"==typeof Symbol&&t.constructor===Symbol&&t!==Symbol.prototype?"symbol":typeof t})(t)}function i(t){if(void 0===t)throw new ReferenceError("this hasn't been initialised - super() hasn't been called");return t}function r(t){var e="function"==typeof Map?new Map:void 0;return(r=function(t){if(null===t||(n=t,-1===Function.toString.call(n).indexOf("[native code]")))return t;var n;if("function"!=typeof t)throw new TypeError("Super expression must either be null or a function");if(void 0!==e){if(e.has(t))return e.get(t);e.set(t,i)}function i(){return o(t,arguments,c(this).constructor)}return i.prototype=Object.create(t.prototype,{constructor:{value:i,enumerable:!1,writable:!0,configurable:!0}}),a(i,t)})(t)}function o(t,e,n){return(o=s()?Reflect.construct:function(t,e,n){var i=[null];i.push.apply(i,e);var r=new(Function.bind.apply(t,i));return n&&a(r,n.prototype),r}).apply(null,arguments)}function s(){if("undefined"==typeof Reflect||!Reflect.construct)return!1;if(Reflect.construct.sham)return!1;if("function"==typeof Proxy)return!0;try{return Boolean.prototype.valueOf.call(Reflect.construct(Boolean,[],(function(){}))),!0}catch(t){return!1}}function a(t,e){return(a=Object.setPrototypeOf||function(t,e){return t.__proto__=e,t})(t,e)}function c(t){return(c=Object.setPrototypeOf?Object.getPrototypeOf:function(t){return t.__proto__||Object.getPrototypeOf(t)})(t)}function l(t,e){if(!(t instanceof e))throw new TypeError("Cannot call a class as a function")}function u(t,e){for(var n=0;n<e.length;n++){var i=e[n];i.enumerable=i.enumerable||!1,i.configurable=!0,"value"in i&&(i.writable=!0),Object.defineProperty(t,i.key,i)}}function h(t,e,n){return e&&u(t.prototype,e),n&&u(t,n),t}!function(){"use strict";var t=function(){function t(n){l(this,t),this.id=-1,this.nativePointer=n,this.pageX=n.pageX,this.pageY=n.pageY,this.clientX=n.clientX,this.clientY=n.clientY,self.Touch&&n instanceof Touch?this.id=n.identifier:e(n)&&(this.id=n.pointerId)}return h(t,[{key:"getCoalesced",value:function(){return"getCoalescedEvents"in this.nativePointer?this.nativePointer.getCoalescedEvents().map((function(e){return new t(e)})):[this]}}]),t}(),e=function(t){return self.PointerEvent&&t instanceof PointerEvent},o=function(){},s=function(){function n(t,e){l(this,n),this._element=t,this.startPointers=[],this.currentPointers=[];var i=e.start,r=void 0===i?function(){return!0}:i,s=e.move,a=void 0===s?o:s,c=e.end,u=void 0===c?o:c;this._startCallback=r,this._moveCallback=a,this._endCallback=u,this._pointerStart=this._pointerStart.bind(this),this._touchStart=this._touchStart.bind(this),this._move=this._move.bind(this),this._triggerPointerEnd=this._triggerPointerEnd.bind(this),this._pointerEnd=this._pointerEnd.bind(this),this._touchEnd=this._touchEnd.bind(this);var h="ontouchstart"in window||navigator.msMaxTouchPoints;self.PointerEvent&&h?this._element.addEventListener("pointerdown",this._pointerStart):(this._element.addEventListener("mousedown",this._pointerStart),this._element.addEventListener("touchstart",this._touchStart),this._element.addEventListener("touchmove",this._move),this._element.addEventListener("touchend",this._touchEnd))}return h(n,[{key:"_triggerPointerStart",value:function(t,e){return!!this._startCallback(t,e)&&(this.currentPointers.push(t),this.startPointers.push(t),!0)}},{key:"_pointerStart",value:function(n){0===n.button&&this._triggerPointerStart(new t(n),n)&&(e(n)?(this._element.setPointerCapture(n.pointerId),this._element.addEventListener("pointermove",this._move),this._element.addEventListener("pointerup",this._pointerEnd)):(window.addEventListener("mousemove",this._move),window.addEventListener("mouseup",this._pointerEnd)))}},{key:"_touchStart",value:function(e){for(var n=0,i=Array.from(e.changedTouches);n<i.length;n++){var r=i[n];this._triggerPointerStart(new t(r),e)}}},{key:"_move",value:function(e){var n=this,i=this.currentPointers.slice(),r="changedTouches"in e?Array.from(e.changedTouches).map((function(e){return new t(e)})):[new t(e)],o=[],s=!0,a=!1,c=void 0;try{for(var l,u=function(){var t=l.value,e=n.currentPointers.findIndex((function(e){return e.id===t.id}));if(-1===e)return"continue";o.push(t),n.currentPointers[e]=t},h=r[Symbol.iterator]();!(s=(l=h.next()).done);s=!0)u()}catch(t){a=!0,c=t}finally{try{s||null==h.return||h.return()}finally{if(a)throw c}}0!==o.length&&this._moveCallback(i,o,e)}},{key:"_triggerPointerEnd",value:function(t,e){var n=this.currentPointers.findIndex((function(e){return e.id===t.id}));return-1!==n&&(this.currentPointers.splice(n,1),this.startPointers.splice(n,1),this._endCallback(t,e),!0)}},{key:"_pointerEnd",value:function(n){if(this._triggerPointerEnd(new t(n),n))if(e(n)){if(this.currentPointers.length)return;this._element.removeEventListener("pointermove",this._move),this._element.removeEventListener("pointerup",this._pointerEnd)}else window.removeEventListener("mousemove",this._move),window.removeEventListener("mouseup",this._pointerEnd)}},{key:"_touchEnd",value:function(e){for(var n=0,i=Array.from(e.changedTouches);n<i.length;n++){var r=i[n];this._triggerPointerEnd(new t(r),e)}}}]),n}();!function(t,e){void 0===e&&(e={});var n=e.insertAt;if(t&&"undefined"!=typeof document){var i=document.head||document.getElementsByTagName("head")[0],r=document.createElement("style");r.type="text/css","top"===n&&i.firstChild?i.insertBefore(r,i.firstChild):i.appendChild(r),r.styleSheet?r.styleSheet.cssText=t:r.appendChild(document.createTextNode(t))}}("pinch-zoom {\n  display: block;\n  overflow: hidden;\n  touch-action: none;\n  --scale: 1;\n  --x: 0;\n  --y: 0;\n}\n\npinch-zoom > * {\n  transform: translate(var(--x), var(--y)) scale(var(--scale));\n  transform-origin: 0 0;\n  will-change: transform;\n}\n");var u;function f(t,e){return e?Math.sqrt(Math.pow(e.clientX-t.clientX,2)+Math.pow(e.clientY-t.clientY,2)):0}function d(t,e){return e?{clientX:(t.clientX+e.clientX)/2,clientY:(t.clientY+e.clientY)/2}:t}function v(t,e){return"number"==typeof t?t:t.trimRight().endsWith("%")?e*parseFloat(t)/100:parseFloat(t)}function p(){return u||(u=document.createElementNS("http://www.w3.org/2000/svg","svg"))}function m(){return p().createSVGMatrix()}function g(){return p().createSVGPoint()}var y=function(t){function e(){var t;l(this,e),(t=function(t,e){return!e||"object"!==n(e)&&"function"!=typeof e?i(t):e}(this,c(e).call(this)))._transform=m(),new MutationObserver((function(){return t._stageElChange()})).observe(i(t),{childList:!0});var r=new s(i(t),{start:function(e,n){return!(2===r.currentPointers.length||!t._positioningEl)&&(n.preventDefault(),!0)},move:function(e){t._onPointerMove(e,r.currentPointers)}});return t.addEventListener("wheel",(function(e){return t._onWheel(e)})),t}return function(t,e){if("function"!=typeof e&&null!==e)throw new TypeError("Super expression must either be null or a function");t.prototype=Object.create(e&&e.prototype,{constructor:{value:t,writable:!0,configurable:!0}}),e&&a(t,e)}(e,t),h(e,[{key:"attributeChangedCallback",value:function(t,e,n){"min-scale"===t&&this.scale<this.minScale&&this.setTransform({scale:this.minScale})}},{key:"connectedCallback",value:function(){this._stageElChange()}},{key:"scaleTo",value:function(t){var e=arguments.length>1&&void 0!==arguments[1]?arguments[1]:{},n=e.originX,i=void 0===n?0:n,r=e.originY,o=void 0===r?0:r,s=e.relativeTo,a=void 0===s?"content":s,c=e.allowChangeEvent,l=void 0!==c&&c,u="content"===a?this._positioningEl:this;if(u&&this._positioningEl){var h=u.getBoundingClientRect();if(i=v(i,h.width),o=v(o,h.height),"content"===a)i+=this.x,o+=this.y;else{var f=this._positioningEl.getBoundingClientRect();i-=f.left,o-=f.top}this._applyChange({allowChangeEvent:l,originX:i,originY:o,scaleDiff:t/this.scale})}else this.setTransform({scale:t,allowChangeEvent:l})}},{key:"setTransform",value:function(){var t=arguments.length>0&&void 0!==arguments[0]?arguments[0]:{},e=t.scale,n=void 0===e?this.scale:e,i=t.allowChangeEvent,r=void 0!==i&&i,o=t.x,s=void 0===o?this.x:o,a=t.y,c=void 0===a?this.y:a;if(this._positioningEl){var l=this.getBoundingClientRect(),u=this._positioningEl.getBoundingClientRect();if(l.width&&l.height){var h=g();h.x=u.left-l.left,h.y=u.top-l.top;var f=g();f.x=u.width+h.x,f.y=u.height+h.y;var d=m().translate(s,c).scale(n).multiply(this._transform.inverse());h=h.matrixTransform(d),f=f.matrixTransform(d),h.x>l.width?s+=l.width-h.x:f.x<0&&(s+=-f.x),h.y>l.height?c+=l.height-h.y:f.y<0&&(c+=-f.y),this._updateTransform(n,s,c,r)}else this._updateTransform(n,s,c,r)}else this._updateTransform(n,s,c,r)}},{key:"_updateTransform",value:function(t,e,n,i){if(!(t<this.minScale)&&(t!==this.scale||e!==this.x||n!==this.y)&&(this._transform.e=e,this._transform.f=n,this._transform.d=this._transform.a=t,this.style.setProperty("--x",this.x+"px"),this.style.setProperty("--y",this.y+"px"),this.style.setProperty("--scale",this.scale+""),i)){var r=new Event("change",{bubbles:!0});this.dispatchEvent(r)}}},{key:"_stageElChange",value:function(){this._positioningEl=void 0,0!==this.children.length&&(this._positioningEl=this.children[0],this.children.length>1&&console.warn("<pinch-zoom> must not have more than one child."),this.setTransform({allowChangeEvent:!0}))}},{key:"_onWheel",value:function(t){if(this.children[0].classList.add("smooth"),this._positioningEl){t.preventDefault();var e=this._positioningEl.getBoundingClientRect(),n=t.deltaY,i=t.ctrlKey;1===t.deltaMode&&(n*=10);var r=1-n/(i?100:300);this._applyChange({scaleDiff:r,originX:t.clientX-e.left,originY:t.clientY-e.top,allowChangeEvent:!0})}}},{key:"_onPointerMove",value:function(t,e){if(this.children[0].classList.remove("smooth"),this._positioningEl){var n=this._positioningEl.getBoundingClientRect(),i=d(t[0],t[1]),r=d(e[0],e[1]),o=i.clientX-n.left,s=i.clientY-n.top,a=f(t[0],t[1]),c=f(e[0],e[1]),l=a?c/a:1;this._applyChange({originX:o,originY:s,scaleDiff:l,panX:r.clientX-i.clientX,panY:r.clientY-i.clientY,allowChangeEvent:!0})}}},{key:"_applyChange",value:function(){var t=arguments.length>0&&void 0!==arguments[0]?arguments[0]:{},e=t.panX,n=void 0===e?0:e,i=t.panY,r=void 0===i?0:i,o=t.originX,s=void 0===o?0:o,a=t.originY,c=void 0===a?0:a,l=t.scaleDiff,u=void 0===l?1:l,h=t.allowChangeEvent,f=void 0!==h&&h,d=m().translate(n,r).translate(s,c).translate(this.x,this.y).scale(u).translate(-s,-c).scale(this.scale);this.setTransform({allowChangeEvent:f,scale:d.a,x:d.e,y:d.f})}},{key:"minScale",get:function(){var t=this.getAttribute("min-scale");if(!t)return.25;var e=parseFloat(t);return Number.isFinite(e)?Math.max(.25,e):.25},set:function(t){this.setAttribute("min-scale",String(t))}},{key:"x",get:function(){return this._transform.e}},{key:"y",get:function(){return this._transform.f}},{key:"scale",get:function(){return this._transform.a}}],[{key:"observedAttributes",get:function(){return["min-scale"]}}]),e}(r(HTMLElement));customElements.define("pinch-zoom",y)}()}]);
+!function (t) {
+  var e = {};
+  function n(i) {
+    if (e[i]) return e[i].exports;
+    var r = e[i] = { i: i, l: !1, exports: {} };
+    return t[i].call(r.exports, r, r.exports, n), r.l = !0, r.exports;
+  }
+  n.m = t,
+    n.c = e,
+    n.d = function (t, e, i) {
+      n.o(t, e) || Object.defineProperty(t, e, { enumerable: !0, get: i });
+    },
+    n.r = function (t) {
+      "undefined" != typeof Symbol && Symbol.toStringTag &&
+      Object.defineProperty(t, Symbol.toStringTag, { value: "Module" }),
+        Object.defineProperty(t, "__esModule", { value: !0 });
+    },
+    n.t = function (t, e) {
+      if (1 & e && (t = n(t)), 8 & e) return t;
+      if (4 & e && "object" == typeof t && t && t.__esModule) return t;
+      var i = Object.create(null);
+      if (
+        n.r(i),
+          Object.defineProperty(i, "default", { enumerable: !0, value: t }),
+          2 & e && "string" != typeof t
+      ) {
+        for (var r in t) {
+          n.d(
+            i,
+            r,
+            function (e) {
+              return t[e];
+            }.bind(null, r),
+          );
+        }
+      }
+      return i;
+    },
+    n.n = function (t) {
+      var e = t && t.__esModule
+        ? function () {
+          return t.default;
+        }
+        : function () {
+          return t;
+        };
+      return n.d(e, "a", e), e;
+    },
+    n.o = function (t, e) {
+      return Object.prototype.hasOwnProperty.call(t, e);
+    },
+    n.p = "",
+    n(n.s = 0);
+}([function (t, e, n) {
+  "use strict";
+  n.r(e);
+  n(1);
+  !function (t) {
+    var e, n = { touchend: function () {} };
+    for (e in n) t.addEventListener(e, n);
+  }(document);
+  var i = document.querySelectorAll(".st0"),
+    r = document.getElementById("reset");
+  i.forEach(function (t, e) {
+    t.setAttribute("id", e), t.addEventListener("click", s);
+  }),
+    r.addEventListener("click", function () {
+      t = "hex",
+        document.cookie = t +
+          "=; Path=/; Expires=Thu, 01 Jan 1970 00:00:01 GMT;",
+        window.history.replaceState(null, null, window.location.pathname),
+        i.forEach(function (t, e) {
+          t.classList.remove("off");
+        }),
+        o = [];
+      var t;
+    });
+  var o = function () {
+    var t = new URLSearchParams(window.location.search).get("show"),
+      e = function (t) {
+        var e = "; ".concat(document.cookie).split("; ".concat(t, "="));
+        if (2 === e.length) return e.pop().split(";").shift();
+      }("hex"),
+      n = [];
+    e ? n = e.split(",") : t && (n = t.split(","));
+    for (var i = 0; i < n.length; i++) {
+      var r = document.getElementById(n[i]);
+      if (!r) {
+        a(n);
+        break;
+      }
+      r.classList.add("off");
+    }
+    return n;
+  }();
+  function s() {
+    var t, e = this.getAttribute("id");
+    this.classList.contains("off")
+      ? (this.classList.remove("off"),
+        t = e,
+        o = o.filter(function (e) {
+          return e != t;
+        }))
+      : (this.classList.add("off"), o.push(e)),
+      a(o),
+      function (t, e) {
+        document.cookie = t + "=" + e + "; Path=/;";
+      }("hex", o.join());
+  }
+  function a(t) {
+    var e = window.location.protocol + "//" + window.location.host +
+      window.location.pathname + "?show=" + t;
+    window.history.replaceState({ path: e }, "", e);
+  }
+}, function (t, e) {
+  function n(t) {
+    return (n =
+      "function" == typeof Symbol && "symbol" == typeof Symbol.iterator
+        ? function (t) {
+          return typeof t;
+        }
+        : function (t) {
+          return t && "function" == typeof Symbol && t.constructor === Symbol &&
+              t !== Symbol.prototype
+            ? "symbol"
+            : typeof t;
+        })(t);
+  }
+  function i(t) {
+    if (void 0 === t) {
+      throw new ReferenceError(
+        "this hasn't been initialised - super() hasn't been called",
+      );
+    }
+    return t;
+  }
+  function r(t) {
+    var e = "function" == typeof Map ? new Map() : void 0;
+    return (r = function (t) {
+      if (
+        null === t ||
+        (n = t, -1 === Function.toString.call(n).indexOf("[native code]"))
+      ) return t;
+      var n;
+      if ("function" != typeof t) {
+        throw new TypeError(
+          "Super expression must either be null or a function",
+        );
+      }
+      if (void 0 !== e) {
+        if (e.has(t)) return e.get(t);
+        e.set(t, i);
+      }
+      function i() {
+        return o(t, arguments, c(this).constructor);
+      }
+      return i.prototype = Object.create(t.prototype, {
+        constructor: {
+          value: i,
+          enumerable: !1,
+          writable: !0,
+          configurable: !0,
+        },
+      }),
+        a(i, t);
+    })(t);
+  }
+  function o(t, e, n) {
+    return (o = s() ? Reflect.construct : function (t, e, n) {
+      var i = [null];
+      i.push.apply(i, e);
+      var r = new (Function.bind.apply(t, i))();
+      return n && a(r, n.prototype), r;
+    }).apply(null, arguments);
+  }
+  function s() {
+    if ("undefined" == typeof Reflect || !Reflect.construct) return !1;
+    if (Reflect.construct.sham) return !1;
+    if ("function" == typeof Proxy) return !0;
+    try {
+      return Boolean.prototype.valueOf.call(
+        Reflect.construct(Boolean, [], function () {}),
+      ),
+        !0;
+    } catch (t) {
+      return !1;
+    }
+  }
+  function a(t, e) {
+    return (a = Object.setPrototypeOf || function (t, e) {
+      return t.__proto__ = e, t;
+    })(t, e);
+  }
+  function c(t) {
+    return (c = Object.setPrototypeOf ? Object.getPrototypeOf : function (t) {
+      return t.__proto__ || Object.getPrototypeOf(t);
+    })(t);
+  }
+  function l(t, e) {
+    if (!(t instanceof e)) {
+      throw new TypeError("Cannot call a class as a function");
+    }
+  }
+  function u(t, e) {
+    for (var n = 0; n < e.length; n++) {
+      var i = e[n];
+      i.enumerable = i.enumerable || !1,
+        i.configurable = !0,
+        "value" in i && (i.writable = !0),
+        Object.defineProperty(t, i.key, i);
+    }
+  }
+  function h(t, e, n) {
+    return e && u(t.prototype, e), n && u(t, n), t;
+  }
+  !function () {
+    "use strict";
+    var t = function () {
+        function t(n) {
+          l(this, t),
+            this.id = -1,
+            this.nativePointer = n,
+            this.pageX = n.pageX,
+            this.pageY = n.pageY,
+            this.clientX = n.clientX,
+            this.clientY = n.clientY,
+            self.Touch && n instanceof Touch
+              ? this.id = n.identifier
+              : e(n) && (this.id = n.pointerId);
+        }
+        return h(t, [{
+          key: "getCoalesced",
+          value: function () {
+            return "getCoalescedEvents" in this.nativePointer
+              ? this.nativePointer.getCoalescedEvents().map(function (e) {
+                return new t(e);
+              })
+              : [this];
+          },
+        }]),
+          t;
+      }(),
+      e = function (t) {
+        return self.PointerEvent && t instanceof PointerEvent;
+      },
+      o = function () {},
+      s = function () {
+        function n(t, e) {
+          l(this, n),
+            this._element = t,
+            this.startPointers = [],
+            this.currentPointers = [];
+          var i = e.start,
+            r = void 0 === i
+              ? function () {
+                return !0;
+              }
+              : i,
+            s = e.move,
+            a = void 0 === s ? o : s,
+            c = e.end,
+            u = void 0 === c ? o : c;
+          this._startCallback = r,
+            this._moveCallback = a,
+            this._endCallback = u,
+            this._pointerStart = this._pointerStart.bind(this),
+            this._touchStart = this._touchStart.bind(this),
+            this._move = this._move.bind(this),
+            this._triggerPointerEnd = this._triggerPointerEnd.bind(this),
+            this._pointerEnd = this._pointerEnd.bind(this),
+            this._touchEnd = this._touchEnd.bind(this);
+          var h = "ontouchstart" in window || navigator.msMaxTouchPoints;
+          self.PointerEvent && h
+            ? this._element.addEventListener("pointerdown", this._pointerStart)
+            : (this._element.addEventListener("mousedown", this._pointerStart),
+              this._element.addEventListener("touchstart", this._touchStart),
+              this._element.addEventListener("touchmove", this._move),
+              this._element.addEventListener("touchend", this._touchEnd));
+        }
+        return h(n, [{
+          key: "_triggerPointerStart",
+          value: function (t, e) {
+            return !!this._startCallback(t, e) &&
+              (this.currentPointers.push(t), this.startPointers.push(t), !0);
+          },
+        }, {
+          key: "_pointerStart",
+          value: function (n) {
+            0 === n.button && this._triggerPointerStart(new t(n), n) &&
+              (e(n)
+                ? (this._element.setPointerCapture(n.pointerId),
+                  this._element.addEventListener("pointermove", this._move),
+                  this._element.addEventListener("pointerup", this._pointerEnd))
+                : (window.addEventListener("mousemove", this._move),
+                  window.addEventListener("mouseup", this._pointerEnd)));
+          },
+        }, {
+          key: "_touchStart",
+          value: function (e) {
+            for (
+              var n = 0, i = Array.from(e.changedTouches);
+              n < i.length;
+              n++
+            ) {
+              var r = i[n];
+              this._triggerPointerStart(new t(r), e);
+            }
+          },
+        }, {
+          key: "_move",
+          value: function (e) {
+            var n = this,
+              i = this.currentPointers.slice(),
+              r = "changedTouches" in e
+                ? Array.from(e.changedTouches).map(function (e) {
+                  return new t(e);
+                })
+                : [new t(e)],
+              o = [],
+              s = !0,
+              a = !1,
+              c = void 0;
+            try {
+              for (
+                var l,
+                  u = function () {
+                    var t = l.value,
+                      e = n.currentPointers.findIndex(function (e) {
+                        return e.id === t.id;
+                      });
+                    if (-1 === e) return "continue";
+                    o.push(t), n.currentPointers[e] = t;
+                  },
+                  h = r[Symbol.iterator]();
+                !(s = (l = h.next()).done);
+                s = !0
+              ) u();
+            } catch (t) {
+              a = !0, c = t;
+            } finally {
+              try {
+                s || null == h.return || h.return();
+              } finally {
+                if (a) throw c;
+              }
+            }
+            0 !== o.length && this._moveCallback(i, o, e);
+          },
+        }, {
+          key: "_triggerPointerEnd",
+          value: function (t, e) {
+            var n = this.currentPointers.findIndex(function (e) {
+              return e.id === t.id;
+            });
+            return -1 !== n &&
+              (this.currentPointers.splice(n, 1),
+                this.startPointers.splice(n, 1),
+                this._endCallback(t, e),
+                !0);
+          },
+        }, {
+          key: "_pointerEnd",
+          value: function (n) {
+            if (this._triggerPointerEnd(new t(n), n)) {
+              if (e(n)) {
+                if (this.currentPointers.length) return;
+                this._element.removeEventListener("pointermove", this._move),
+                  this._element.removeEventListener(
+                    "pointerup",
+                    this._pointerEnd,
+                  );
+              } else {window.removeEventListener("mousemove", this._move),
+                  window.removeEventListener("mouseup", this._pointerEnd);}
+            }
+          },
+        }, {
+          key: "_touchEnd",
+          value: function (e) {
+            for (
+              var n = 0, i = Array.from(e.changedTouches);
+              n < i.length;
+              n++
+            ) {
+              var r = i[n];
+              this._triggerPointerEnd(new t(r), e);
+            }
+          },
+        }]),
+          n;
+      }();
+    !function (t, e) {
+      void 0 === e && (e = {});
+      var n = e.insertAt;
+      if (t && "undefined" != typeof document) {
+        var i = document.head || document.getElementsByTagName("head")[0],
+          r = document.createElement("style");
+        r.type = "text/css",
+          "top" === n && i.firstChild
+            ? i.insertBefore(r, i.firstChild)
+            : i.appendChild(r),
+          r.styleSheet
+            ? r.styleSheet.cssText = t
+            : r.appendChild(document.createTextNode(t));
+      }
+    }("pinch-zoom {\n  display: block;\n  overflow: hidden;\n  touch-action: none;\n  --scale: 1;\n  --x: 0;\n  --y: 0;\n}\n\npinch-zoom > * {\n  transform: translate(var(--x), var(--y)) scale(var(--scale));\n  transform-origin: 0 0;\n  will-change: transform;\n}\n");
+    var u;
+    function f(t, e) {
+      return e
+        ? Math.sqrt(
+          Math.pow(e.clientX - t.clientX, 2) +
+            Math.pow(e.clientY - t.clientY, 2),
+        )
+        : 0;
+    }
+    function d(t, e) {
+      return e
+        ? {
+          clientX: (t.clientX + e.clientX) / 2,
+          clientY: (t.clientY + e.clientY) / 2,
+        }
+        : t;
+    }
+    function v(t, e) {
+      return "number" == typeof t
+        ? t
+        : t.trimRight().endsWith("%")
+        ? e * parseFloat(t) / 100
+        : parseFloat(t);
+    }
+    function p() {
+      return u ||
+        (u = document.createElementNS("http://www.w3.org/2000/svg", "svg"));
+    }
+    function m() {
+      return p().createSVGMatrix();
+    }
+    function g() {
+      return p().createSVGPoint();
+    }
+    var y = function (t) {
+      function e() {
+        var t;
+        l(this, e),
+          (t = function (t, e) {
+            return !e || "object" !== n(e) && "function" != typeof e ? i(t) : e;
+          }(this, c(e).call(this)))._transform = m(),
+          new MutationObserver(function () {
+            return t._stageElChange();
+          }).observe(i(t), { childList: !0 });
+        var r = new s(i(t), {
+          start: function (e, n) {
+            return !(2 === r.currentPointers.length || !t._positioningEl) &&
+              (n.preventDefault(), !0);
+          },
+          move: function (e) {
+            t._onPointerMove(e, r.currentPointers);
+          },
+        });
+        return t.addEventListener("wheel", function (e) {
+          return t._onWheel(e);
+        }),
+          t;
+      }
+      return function (t, e) {
+        if ("function" != typeof e && null !== e) {
+          throw new TypeError(
+            "Super expression must either be null or a function",
+          );
+        }
+        t.prototype = Object.create(e && e.prototype, {
+          constructor: { value: t, writable: !0, configurable: !0 },
+        }), e && a(t, e);
+      }(e, t),
+        h(e, [{
+          key: "attributeChangedCallback",
+          value: function (t, e, n) {
+            "min-scale" === t && this.scale < this.minScale &&
+              this.setTransform({ scale: this.minScale });
+          },
+        }, {
+          key: "connectedCallback",
+          value: function () {
+            this._stageElChange();
+          },
+        }, {
+          key: "scaleTo",
+          value: function (t) {
+            var e = arguments.length > 1 && void 0 !== arguments[1]
+                ? arguments[1]
+                : {},
+              n = e.originX,
+              i = void 0 === n ? 0 : n,
+              r = e.originY,
+              o = void 0 === r ? 0 : r,
+              s = e.relativeTo,
+              a = void 0 === s ? "content" : s,
+              c = e.allowChangeEvent,
+              l = void 0 !== c && c,
+              u = "content" === a ? this._positioningEl : this;
+            if (u && this._positioningEl) {
+              var h = u.getBoundingClientRect();
+              if (i = v(i, h.width), o = v(o, h.height), "content" === a) {
+                i += this.x, o += this.y;
+              } else {
+                var f = this._positioningEl.getBoundingClientRect();
+                i -= f.left, o -= f.top;
+              }
+              this._applyChange({
+                allowChangeEvent: l,
+                originX: i,
+                originY: o,
+                scaleDiff: t / this.scale,
+              });
+            } else this.setTransform({ scale: t, allowChangeEvent: l });
+          },
+        }, {
+          key: "setTransform",
+          value: function () {
+            var t = arguments.length > 0 && void 0 !== arguments[0]
+                ? arguments[0]
+                : {},
+              e = t.scale,
+              n = void 0 === e ? this.scale : e,
+              i = t.allowChangeEvent,
+              r = void 0 !== i && i,
+              o = t.x,
+              s = void 0 === o ? this.x : o,
+              a = t.y,
+              c = void 0 === a ? this.y : a;
+            if (this._positioningEl) {
+              var l = this.getBoundingClientRect(),
+                u = this._positioningEl.getBoundingClientRect();
+              if (l.width && l.height) {
+                var h = g();
+                h.x = u.left - l.left, h.y = u.top - l.top;
+                var f = g();
+                f.x = u.width + h.x, f.y = u.height + h.y;
+                var d = m().translate(s, c).scale(n).multiply(
+                  this._transform.inverse(),
+                );
+                h = h.matrixTransform(d),
+                  f = f.matrixTransform(d),
+                  h.x > l.width ? s += l.width - h.x : f.x < 0 && (s += -f.x),
+                  h.y > l.height ? c += l.height - h.y : f.y < 0 && (c += -f.y),
+                  this._updateTransform(n, s, c, r);
+              } else this._updateTransform(n, s, c, r);
+            } else this._updateTransform(n, s, c, r);
+          },
+        }, {
+          key: "_updateTransform",
+          value: function (t, e, n, i) {
+            if (
+              !(t < this.minScale) &&
+              (t !== this.scale || e !== this.x || n !== this.y) &&
+              (this._transform.e = e,
+                this._transform.f = n,
+                this._transform.d = this._transform.a = t,
+                this.style.setProperty("--x", this.x + "px"),
+                this.style.setProperty("--y", this.y + "px"),
+                this.style.setProperty("--scale", this.scale + ""),
+                i)
+            ) {
+              var r = new Event("change", { bubbles: !0 });
+              this.dispatchEvent(r);
+            }
+          },
+        }, {
+          key: "_stageElChange",
+          value: function () {
+            this._positioningEl = void 0,
+              0 !== this.children.length &&
+              (this._positioningEl = this.children[0],
+                this.children.length > 1 &&
+                console.warn("<pinch-zoom> must not have more than one child."),
+                this.setTransform({ allowChangeEvent: !0 }));
+          },
+        }, {
+          key: "_onWheel",
+          value: function (t) {
+            if (this.children[0].classList.add("smooth"), this._positioningEl) {
+              t.preventDefault();
+              var e = this._positioningEl.getBoundingClientRect(),
+                n = t.deltaY,
+                i = t.ctrlKey;
+              1 === t.deltaMode && (n *= 10);
+              var r = 1 - n / (i ? 100 : 300);
+              this._applyChange({
+                scaleDiff: r,
+                originX: t.clientX - e.left,
+                originY: t.clientY - e.top,
+                allowChangeEvent: !0,
+              });
+            }
+          },
+        }, {
+          key: "_onPointerMove",
+          value: function (t, e) {
+            if (
+              this.children[0].classList.remove("smooth"), this._positioningEl
+            ) {
+              var n = this._positioningEl.getBoundingClientRect(),
+                i = d(t[0], t[1]),
+                r = d(e[0], e[1]),
+                o = i.clientX - n.left,
+                s = i.clientY - n.top,
+                a = f(t[0], t[1]),
+                c = f(e[0], e[1]),
+                l = a ? c / a : 1;
+              this._applyChange({
+                originX: o,
+                originY: s,
+                scaleDiff: l,
+                panX: r.clientX - i.clientX,
+                panY: r.clientY - i.clientY,
+                allowChangeEvent: !0,
+              });
+            }
+          },
+        }, {
+          key: "_applyChange",
+          value: function () {
+            var t = arguments.length > 0 && void 0 !== arguments[0]
+                ? arguments[0]
+                : {},
+              e = t.panX,
+              n = void 0 === e ? 0 : e,
+              i = t.panY,
+              r = void 0 === i ? 0 : i,
+              o = t.originX,
+              s = void 0 === o ? 0 : o,
+              a = t.originY,
+              c = void 0 === a ? 0 : a,
+              l = t.scaleDiff,
+              u = void 0 === l ? 1 : l,
+              h = t.allowChangeEvent,
+              f = void 0 !== h && h,
+              d = m().translate(n, r).translate(s, c).translate(this.x, this.y)
+                .scale(u).translate(-s, -c).scale(this.scale);
+            this.setTransform({
+              allowChangeEvent: f,
+              scale: d.a,
+              x: d.e,
+              y: d.f,
+            });
+          },
+        }, {
+          key: "minScale",
+          get: function () {
+            var t = this.getAttribute("min-scale");
+            if (!t) return .25;
+            var e = parseFloat(t);
+            return Number.isFinite(e) ? Math.max(.25, e) : .25;
+          },
+          set: function (t) {
+            this.setAttribute("min-scale", String(t));
+          },
+        }, {
+          key: "x",
+          get: function () {
+            return this._transform.e;
+          },
+        }, {
+          key: "y",
+          get: function () {
+            return this._transform.f;
+          },
+        }, {
+          key: "scale",
+          get: function () {
+            return this._transform.a;
+          },
+        }], [{
+          key: "observedAttributes",
+          get: function () {
+            return ["min-scale"];
+          },
+        }]),
+        e;
+    }(r(HTMLElement));
+    customElements.define("pinch-zoom", y);
+  }();
+}]);
