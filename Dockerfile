@@ -15,6 +15,7 @@ RUN pnpm install --frozen-lockfile
 # Bring in the full source tree and build the service.
 COPY . .
 RUN pnpm server:build
+RUN pnpm prune --prod
 
 FROM node:22-bookworm-slim AS runner
 WORKDIR /app
