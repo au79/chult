@@ -1,0 +1,11 @@
+node_modules
+client/node_modules
+server/node_modules
+coverage
+client/coverage
+server/coverage
+dist
+.git
+.gitignore
+pnpm-debug.log
+*.md
