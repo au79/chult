@@ -1,5 +1,5 @@
-/*/coverage/
-/*/node_modules/
+coverage/
+node_modules/
 /.pnpm-*/
 /server/data/shown-hexes.txt
 

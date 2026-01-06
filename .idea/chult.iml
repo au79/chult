@@ -7,6 +7,8 @@
       <excludeFolder url="file://$MODULE_DIR$/tmp" />
       <excludeFolder url="file://$MODULE_DIR$/.pnpm-home" />
       <excludeFolder url="file://$MODULE_DIR$/.pnpm-store" />
+      <excludeFolder url="file://$MODULE_DIR$/client/coverage" />
+      <excludeFolder url="file://$MODULE_DIR$/server/coverage" />
     </content>
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
