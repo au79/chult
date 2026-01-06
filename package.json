@@ -1,0 +1,34 @@
+{
+  "name": "chult-monorepo",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "packageManager": "pnpm@9.5.0",
+  "engines": {
+    "node": ">=22"
+  },
+  "scripts": {
+    "dev": "pnpm server:dev",
+    "build": "pnpm server:build",
+    "start": "pnpm server:start",
+    "format": "pnpm run format:root && pnpm client:format && pnpm server:format",
+    "test": "pnpm -r test",
+    "test:coverage": "pnpm -r test:coverage",
+    "test:watch": "pnpm -r test:watch",
+    "server:dev": "pnpm --filter chult-service dev",
+    "server:build": "pnpm --filter chult-service build",
+    "server:start": "pnpm --filter chult-service start",
+    "server:format": "pnpm --filter chult-service format",
+    "server:test": "pnpm --filter chult-service test",
+    "server:test:coverage": "pnpm --filter chult-service test:coverage",
+    "server:test:watch": "pnpm --filter chult-service test:watch",
+    "format:root": "prettier --write \"./*.{js,ts,tsx,jsx,json,md}\" ./shared --ignore-path .prettierignore",
+    "client:format": "pnpm --filter chult-client format",
+    "client:test": "pnpm --filter chult-client test",
+    "client:test:coverage": "pnpm --filter chult-client test:coverage",
+    "client:test:watch": "pnpm --filter chult-client test:watch"
+  },
+  "devDependencies": {
+    "prettier": "^3.7.4"
+  }
+}
