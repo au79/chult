@@ -1,11 +1,11 @@
 {
-  "name": "chult-service",
+  "name": "chult-map-service",
   "version": "0.1.0",
   "private": true,
   "type": "module",
   "packageManager": "pnpm@9.5.0",
   "engines": {
-    "node": ">=22"
+    "node": ">=18.20.4"
   },
   "scripts": {
     "dev": "tsx watch src/server.ts",

@@ -23,8 +23,8 @@ changes pushed immediately via Web Socket.
 
 ### Prerequisites
 
-- Node.js ≥ 22
-- pnpm ≥ 9 (`corepack enable pnpm` recommended)
+- Node.js ≥ 18.20.4
+- pnpm ≥ 9.5.0 (`corepack enable pnpm` recommended)
 
 ### Install Dependencies
 

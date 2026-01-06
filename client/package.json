@@ -1,11 +1,11 @@
 {
-  "name": "chult-client",
+  "name": "chult-map-client",
   "version": "0.1.0",
   "private": true,
   "type": "module",
   "packageManager": "pnpm@9.5.0",
   "engines": {
-    "node": ">=22"
+    "node": ">=18.20.4"
   },
   "scripts": {
     "format": "prettier --write \"**/*.{js,ts,tsx,jsx,json,css,md}\" --ignore-path ../.prettierignore",
