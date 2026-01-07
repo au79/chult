@@ -22,7 +22,7 @@ describe("map bootstrap guard", () => {
     registerPinchZoomElement.mockReset();
     vi.spyOn(moduleWithEnv, "injectMapImage").mockResolvedValue();
 
-    await moduleWithEnv.initializeMapApp();
+    moduleWithEnv.initializeMapApp();
 
     expect(initHexVisibilityControls).toHaveBeenCalledWith({ role: "player" });
     expect(registerPinchZoomElement).toHaveBeenCalledTimes(1);

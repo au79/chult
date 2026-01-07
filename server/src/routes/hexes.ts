@@ -1,10 +1,6 @@
-import type { HexInstruction } from '#shared/hexes';
+import { HexInstruction, HexInstructionPayload } from '#shared/hexes';
 import type { Hono } from 'hono';
 import { HexStore } from '../hexStore.js';
-
-type HexRequestBody = {
-  value?: number;
-};
 
 export function registerHexRoutes(app: Hono, store: HexStore) {
   app.get('/api/hexes', (c) => {
@@ -12,7 +8,7 @@ export function registerHexRoutes(app: Hono, store: HexStore) {
   });
 
   app.post('/api/hexes', async (c) => {
-    let payload: HexRequestBody;
+    let payload: HexInstructionPayload;
     try {
       payload = await c.req.json();
     } catch {
