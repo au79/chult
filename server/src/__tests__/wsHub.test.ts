@@ -1,11 +1,22 @@
 import { EventEmitter } from 'node:events';
 import type { Server as HttpServer } from 'node:http';
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect, vi } from 'vitest';
 import type { RevealedHexes } from '#shared/hexes';
 import { HexWebSocketHub } from '../ws.js';
 
 class MockStore extends EventEmitter {
   hexes: number[] = [];
+  applyHexIdChange = vi.fn(async (value: number) => {
+    const target = Math.abs(value);
+    if (value < 0 && !this.hexes.includes(target)) {
+      this.hexes.push(target);
+    } else if (value > 0) {
+      this.hexes = this.hexes.filter((hex) => hex !== target);
+    }
+    const nextState: RevealedHexes = { hexes: [...this.hexes] };
+    this.emit('change', nextState);
+    return nextState.hexes;
+  });
 
   constructor(initial: number[] = []) {
     super();
@@ -84,4 +95,27 @@ describe('HexWebSocketHub', () => {
     // If the cleanup failed, the closed socket would have received another send.
     expect(socket.sent).toHaveLength(1);
   });
+
+  it('applies incoming instructions received over the socket', async () => {
+    const store = new MockStore([]);
+    const mockServer = new MockWebSocketServer();
+    const hub = new HexWebSocketHub(store as any, {
+      createServer: () => mockServer as any,
+    });
+
+    hub.attach({} as HttpServer);
+    const socket = new MockWebSocket();
+    mockServer.connect(socket);
+
+    socket.emit('message', JSON.stringify({ value: -3 }));
+    await flushMicrotasks();
+
+    expect(store.applyHexIdChange).toHaveBeenCalledWith(-3);
+  });
 });
+
+function flushMicrotasks() {
+  return new Promise((resolve) => {
+    setTimeout(resolve, 0);
+  });
+}

@@ -3,9 +3,13 @@ import { initHexVisibilityControls } from "../public/js/hexControls.js";
 
 class MockWebSocket {
   static instances = [];
+  static OPEN = 1;
 
   constructor() {
     this.listeners = new Map();
+    this.sentMessages = [];
+    this.OPEN = MockWebSocket.OPEN;
+    this.readyState = MockWebSocket.OPEN;
     MockWebSocket.instances.push(this);
   }
 
@@ -22,7 +26,12 @@ class MockWebSocket {
     handlers.forEach((handler) => handler(event));
   }
 
+  send(payload) {
+    this.sentMessages.push(payload);
+  }
+
   close() {
+    this.readyState = 3;
     this.dispatch("close", new Event("close"));
   }
 
@@ -98,10 +107,10 @@ describe("initHexVisibilityControls", () => {
     targetHex.dispatchEvent(new Event("click", { bubbles: true }));
 
     expect(targetHex.classList.contains("off")).toBe(true);
-    expect(global.fetch).toHaveBeenCalledTimes(2);
-    const [, [, postOptions]] = global.fetch.mock.calls;
-    expect(postOptions.method).toBe("POST");
-    expect(JSON.parse(postOptions.body)).toEqual({ value: -1 });
+    expect(global.fetch).toHaveBeenCalledTimes(1);
+    const socket = MockWebSocket.instances[0];
+    expect(socket.sentMessages).toHaveLength(1);
+    expect(JSON.parse(socket.sentMessages[0])).toEqual({ value: -1 });
   });
 
   it("applies WebSocket updates to the DOM", async () => {
@@ -122,7 +131,6 @@ describe("initHexVisibilityControls", () => {
 
   it("sends signed instructions for each revealed hex when resetting", async () => {
     const revealedHexes = [0, 1];
-    const postCalls = [];
 
     global.fetch = vi.fn((url, options) => {
       if (!options) {
@@ -131,7 +139,6 @@ describe("initHexVisibilityControls", () => {
           json: async () => ({ hexes: revealedHexes }),
         });
       }
-      postCalls.push(JSON.parse(options.body).value);
       return Promise.resolve({ ok: true, json: async () => ({}) });
     });
 
@@ -142,7 +149,9 @@ describe("initHexVisibilityControls", () => {
     resetButton.dispatchEvent(new Event("click", { bubbles: true }));
     await flushMicrotasks();
 
-    expect(postCalls).toEqual([0, 1]);
+    const socket = MockWebSocket.instances[0];
+    const sentValues = socket.sentMessages.map((message) => JSON.parse(message).value);
+    expect(sentValues).toEqual([0, 1]);
   });
 
   function flushMicrotasks() {

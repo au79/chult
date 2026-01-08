@@ -1,6 +1,6 @@
 import type { Server as HttpServer } from 'node:http';
-import { WebSocketServer, type WebSocket } from 'ws';
-import type { RevealedHexes } from '#shared/hexes';
+import { WebSocketServer, type WebSocket, type RawData } from 'ws';
+import type { HexInstruction, HexInstructionPayload, RevealedHexes } from '#shared/hexes';
 import { HexStore } from './hexStore.js';
 
 type WebSocketServerLike = {
@@ -53,8 +53,8 @@ export class HexWebSocketHub {
 
     socket.on('close', cleanup);
     socket.on('error', cleanup);
-    socket.on('message', () => {
-      // Ignore incoming messages for now; future versions may add commands.
+    socket.on('message', (data) => {
+      void this.#handleIncomingMessage(socket, data);
     });
 
     socket.send(JSON.stringify({ hexes: this.store.getAll() }));
@@ -69,6 +69,28 @@ export class HexWebSocketHub {
       if (client.readyState === client.OPEN) {
         client.send(serialized);
       }
+    }
+  }
+
+  async #handleIncomingMessage(socket: WebSocket, data: RawData) {
+    let payload: HexInstructionPayload | null = null;
+    try {
+      const serialized =
+        typeof data === 'string' ? data : data?.toString?.() ?? '';
+      payload = JSON.parse(serialized);
+    } catch {
+      return;
+    }
+
+    const instructionValue = payload?.value ?? 0;
+    if (!Number.isInteger(instructionValue) || instructionValue === 0) {
+      return;
+    }
+
+    try {
+      await this.store.applyHexIdChange(instructionValue as HexInstruction);
+    } catch (error) {
+      console.error('Failed to apply hex instruction from WebSocket', error);
     }
   }
 }

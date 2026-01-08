@@ -18,6 +18,8 @@ export function initHexVisibilityControls(options = {}) {
   const revealedHexIds = new Set();
   let isFetching = false;
   const hexLookup = new Map();
+  let activeSocket = null;
+  const pendingInstructions = [];
 
   hexTiles.forEach((hexElement, index) => {
     const id = String(index);
@@ -98,6 +100,7 @@ export function initHexVisibilityControls(options = {}) {
   function connectWebSocket(attempt = 0) {
     const protocol = window.location.protocol === "https:" ? "wss" : "ws";
     const ws = new WebSocket(`${protocol}://${window.location.host}${WS_ENDPOINT}`);
+    activeSocket = ws;
 
     ws.addEventListener("message", (event) => {
       try {
@@ -108,33 +111,62 @@ export function initHexVisibilityControls(options = {}) {
       }
     });
 
+    ws.addEventListener("open", () => {
+      flushPendingInstructions();
+    });
+
     ws.addEventListener("close", () => {
+      if (activeSocket === ws) {
+        activeSocket = null;
+      }
       const nextAttempt = Math.min(attempt + 1, 5);
       const delay = Math.min(1000 * 2 ** attempt, 10000);
       setTimeout(() => connectWebSocket(nextAttempt), delay);
     });
 
     ws.addEventListener("error", () => {
+      if (activeSocket === ws) {
+        activeSocket = null;
+      }
       ws.close();
     });
   }
 
   /**
-   * Sends the signed instruction to the REST endpoint.
+   * Sends the signed instruction over the WebSocket connection.
    */
-  async function sendHexInstruction(value) {
-    try {
-      const response = await fetch(HEX_API_ENDPOINT, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ value }),
-      });
-
-      if (!response.ok) {
-        throw new Error(`Unexpected status ${response.status}`);
+  function sendHexInstruction(value) {
+    return new Promise((resolve) => {
+      if (activeSocket && activeSocket.readyState === WebSocket.OPEN) {
+        transmitInstruction(activeSocket, value, resolve);
+        return;
       }
+
+      pendingInstructions.push({ value, resolve });
+    });
+  }
+
+  function flushPendingInstructions() {
+    if (!activeSocket || activeSocket.readyState !== WebSocket.OPEN) {
+      return;
+    }
+
+    while (pendingInstructions.length) {
+      const { value, resolve } = pendingInstructions.shift();
+      transmitInstruction(activeSocket, value, resolve);
+    }
+  }
+
+  function transmitInstruction(socket, value, resolve) {
+    try {
+      socket.send(JSON.stringify({ value }));
+      resolve?.();
     } catch (error) {
-      console.error("Failed to update hex state", error);
+      console.error("Failed to send hex instruction via WebSocket", error);
+      pendingInstructions.unshift({ value, resolve });
+      if (socket.readyState === WebSocket.CLOSED || socket.readyState === WebSocket.CLOSING) {
+        connectWebSocket();
+      }
     }
   }
 
