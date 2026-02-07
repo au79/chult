@@ -58,7 +58,7 @@ pnpm format
 docker build -t chult-map-server .
 
 # Run the app
-docker run --rm -p 9876:9876 -v "$(pwd)/server/data:/app/server/data" chult-map-server
+docker run --rm -d -p 9876:9876 -v "$(pwd)/server/data:/app/server/data" chult-map-server
 ```
 
 - Exposes port `9876`

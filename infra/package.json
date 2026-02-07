@@ -1,0 +1,25 @@
+{
+  "name": "chult-infra",
+  "version": "0.1.0",
+  "private": true,
+  "description": "AWS CDK app for chult.oolong.com",
+  "scripts": {
+    "build": "tsc",
+    "watch": "tsc -w",
+    "cdk": "cdk",
+    "synth": "cdk synth",
+    "deploy": "cdk deploy",
+    "destroy": "cdk destroy",
+    "create-lambda-role": "./scripts/create-lambda-role.sh"
+  },
+  "devDependencies": {
+    "@types/node": "22.13.5",
+    "aws-cdk": "2.178.2",
+    "ts-node": "10.9.2",
+    "typescript": "5.6.3"
+  },
+  "dependencies": {
+    "aws-cdk-lib": "2.178.2",
+    "constructs": "10.4.2"
+  }
+}
