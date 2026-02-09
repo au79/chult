@@ -26,7 +26,8 @@
     "client:format": "pnpm --filter chult-map-client format",
     "client:test": "pnpm --filter chult-map-client test",
     "client:test:coverage": "pnpm --filter chult-map-client test:coverage",
-    "client:test:watch": "pnpm --filter chult-map-client test:watch"
+    "client:test:watch": "pnpm --filter chult-map-client test:watch",
+    "ecr:push": "bash infra/scripts/push-ecr-image.sh"
   },
   "devDependencies": {
     "prettier": "^3.7.4"
