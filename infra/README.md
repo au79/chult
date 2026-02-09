@@ -56,7 +56,7 @@ The CDK app uses CloudFormation parameters for account-specific details:
 
 - `HostedZoneId` (required)
 - `HostedZoneName` (default: `oolong.com`)
-- `DomainName` (default: `chult.oolong.com`)
+- `Subdomain` (default: `chult`)
 - `ImageTag` (default: `latest`)
 - `EcrRepositoryName` (default: `chult-map-service`)
 - `LambdaRoleName` (default: `ChultLambdaExecutionRole`)
@@ -69,7 +69,7 @@ pnpm --dir infra cdk bootstrap
 pnpm --dir infra cdk deploy ChultServiceStack \\
   --parameters HostedZoneId=Z1234567890 \\
   --parameters HostedZoneName=oolong.com \\
-  --parameters DomainName=chult.oolong.com \\
+  --parameters Subdomain=chult \\
   --parameters ImageTag=latest
 ```
 
@@ -111,3 +111,10 @@ From repo root:
 - `pnpm --dir infra deploy` deploys the stack.
 - `pnpm --dir infra destroy` tears down the stack.
 - `pnpm --dir infra cdk` runs any raw CDK command.
+- `pnpm ecr:push` builds the Docker image and pushes it to ECR.
+
+`pnpm ecr:push` environment overrides:
+
+- `REPO_NAME` (default: `chult-map-service`)
+- `IMAGE_TAG` (default: `latest`)
+- `AWS_REGION` (default: `us-west-2`)

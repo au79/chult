@@ -25,10 +25,10 @@ export class ChultServiceStack extends cdk.Stack {
       description: 'Route 53 hosted zone name (no trailing dot).',
     });
 
-    const domainName = new cdk.CfnParameter(this, 'DomainName', {
+    const subdomain = new cdk.CfnParameter(this, 'Subdomain', {
       type: 'String',
-      default: 'chult.oolong.com',
-      description: 'Full domain name for the service.',
+      default: 'chult',
+      description: 'Subdomain label to use for the service (no zone suffix).',
     });
 
     const imageTag = new cdk.CfnParameter(this, 'ImageTag', {
@@ -81,8 +81,10 @@ export class ChultServiceStack extends cdk.Stack {
       zoneName: hostedZoneName.valueAsString,
     });
 
+    const fullDomainName = `${subdomain.valueAsString}.${hostedZoneName.valueAsString}`;
+
     const certificate = new acm.Certificate(this, 'ChultCertificate', {
-      domainName: domainName.valueAsString,
+      domainName: fullDomainName,
       validation: acm.CertificateValidation.fromDns(zone),
     });
 
@@ -127,7 +129,7 @@ export class ChultServiceStack extends cdk.Stack {
 
     new route53.ARecord(this, 'AlbAliasRecord', {
       zone,
-      recordName: domainName.valueAsString,
+      recordName: subdomain.valueAsString,
       target: route53.RecordTarget.fromAlias(new route53Targets.LoadBalancerTarget(loadBalancer)),
     });
 
