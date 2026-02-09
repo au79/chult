@@ -17,9 +17,8 @@ COPY . .
 RUN pnpm server:build
 RUN pnpm prune --prod
 
-FROM node:22-bookworm-slim AS runner
-WORKDIR /app
-ENV NODE_ENV=production
+FROM public.ecr.aws/lambda/nodejs:22 AS runner
+WORKDIR /var/task
 
 COPY --from=builder /app/package.json ./package.json
 COPY --from=builder /app/pnpm-lock.yaml ./pnpm-lock.yaml
@@ -31,8 +30,7 @@ COPY --from=builder /app/server/node_modules ./server/node_modules
 COPY --from=builder /app/client/public ./client/public
 
 # Ensure the data directory exists so it can be bound to a host volume.
-RUN mkdir -p /app/server/data
-VOLUME ["/app/server/data"]
+RUN mkdir -p /var/task/server/data
+VOLUME ["/var/task/server/data"]
 
-EXPOSE 9876
-CMD ["node", "server/dist/server.js"]
+CMD ["server/dist/lambda.handler"]
