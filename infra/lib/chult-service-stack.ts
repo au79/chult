@@ -101,10 +101,15 @@ export class ChultServiceStack extends cdk.Stack {
     );
 
     const handler = new lambda.DockerImageFunction(this, 'ChultHandler', {
-      code: lambda.DockerImageCode.fromEcr(repo, { tag: imageTag.valueAsString }),
+      code: lambda.DockerImageCode.fromEcr(repo, {
+        tagOrDigest: imageTag.valueAsString,
+      }),
       memorySize: 512,
       timeout: cdk.Duration.seconds(30),
       role: lambdaRole,
+      environment: {
+        DATA_PATH: '/tmp/chult/shown-hexes.txt',
+      },
     });
 
     const httpsListener = loadBalancer.addListener('HttpsListener', {

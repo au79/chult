@@ -10,7 +10,8 @@
     "synth": "cdk synth",
     "deploy": "cdk deploy",
     "destroy": "cdk destroy",
-    "create-lambda-role": "./scripts/create-lambda-role.sh"
+    "create-lambda-role": "./scripts/create-lambda-role.sh",
+    "deploy-latest-image": "./scripts/deploy-latest-image.sh"
   },
   "devDependencies": {
     "@types/node": "22.13.5",

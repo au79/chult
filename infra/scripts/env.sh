@@ -1,0 +1,8 @@
+#!/usr/bin/env bash
+
+REPO_NAME=${REPO_NAME:-chult-map-service}
+IMAGE_TAG=${IMAGE_TAG:-}
+AWS_REGION=${AWS_REGION:-${AWS_DEFAULT_REGION:-us-west-2}}
+ROLE_NAME=${ROLE_NAME:-ChultLambdaExecutionRole}
+TRUST_POLICY_PATH=${TRUST_POLICY_PATH:-}
+BOUNDARY_ARN=${BOUNDARY_ARN:-}

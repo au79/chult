@@ -4,9 +4,8 @@ set -euo pipefail
 SCRIPT_DIR=$(cd "$(dirname "$0")" && pwd)
 INFRA_DIR=$(cd "$SCRIPT_DIR/.." && pwd)
 
-ROLE_NAME=${ROLE_NAME:-ChultLambdaExecutionRole}
+source "$SCRIPT_DIR/env.sh"
 TRUST_POLICY_PATH=${TRUST_POLICY_PATH:-"$INFRA_DIR/iam/lambda-trust-policy.json"}
-BOUNDARY_ARN=${BOUNDARY_ARN:-}
 
 if ! command -v jq >/dev/null 2>&1; then
   echo "ERROR: jq is required but was not found in PATH."
@@ -63,4 +62,9 @@ aws iam attach-role-policy \
   --policy-arn arn:aws:iam::aws:policy/AmazonEC2ContainerRegistryReadOnly \
   >/dev/null
 
-echo "Ensured AmazonEC2ContainerRegistryReadOnly is attached."
+aws iam attach-role-policy \
+  --role-name "$ROLE_NAME" \
+  --policy-arn arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole \
+  >/dev/null
+
+echo "Ensured AmazonEC2ContainerRegistryReadOnly and AWSLambdaBasicExecutionRole are attached."

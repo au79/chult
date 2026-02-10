@@ -1,9 +1,11 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-REPO_NAME=${REPO_NAME:-chult-map-service}
+SCRIPT_DIR=$(cd "$(dirname "$0")" && pwd)
+INFRA_DIR=$(cd "$SCRIPT_DIR/.." && pwd)
+ROOT_DIR=$(cd "$INFRA_DIR/.." && pwd)
+source "$SCRIPT_DIR/env.sh"
 IMAGE_TAG=${IMAGE_TAG:-latest}
-AWS_REGION=${AWS_REGION:-${AWS_DEFAULT_REGION:-us-west-2}}
 
 if ! command -v aws >/dev/null 2>&1; then
   echo "ERROR: aws CLI is required but was not found in PATH."
@@ -26,6 +28,8 @@ IMAGE_URI="$ECR_HOST/$REPO_NAME:$IMAGE_TAG"
 
 aws ecr describe-repositories --repository-names "$REPO_NAME" --region "$AWS_REGION" >/dev/null
 
+export DOCKER_API_VERSION=1.43
+
 aws ecr get-login-password --region "$AWS_REGION" | \
   docker login --username AWS --password-stdin "$ECR_HOST"
 
@@ -34,7 +38,8 @@ docker buildx build \
   --provenance=false \
   --sbom=false \
   -t "$IMAGE_URI" \
+  -f "$ROOT_DIR/Dockerfile" \
   --push \
-  .
+  "$ROOT_DIR"
 
 echo "Pushed $IMAGE_URI"
