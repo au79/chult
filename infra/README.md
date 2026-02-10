@@ -1,6 +1,6 @@
 # AWS Resources for chult.oolong.com
 
-This document lists the AWS resources needed to securely host the Docker-based service behind an ALB and expose it as `chult.oolong.com`. CDK code lives in this directory under `bin/` and `lib/`.
+This document lists the AWS resources needed to securely host the Docker-based service (Lambda Function URL + CloudFront) and expose it as `chult.oolong.com`. CDK code lives in this directory under `bin/` and `lib/`.
 
 ## Core service path
 
@@ -14,41 +14,41 @@ This document lists the AWS resources needed to securely host the Docker-based s
    - Environment variables for runtime configuration (if any).
    - **Execution role** with least-privilege permissions (ECR pull).
 
-3. **Application Load Balancer (ALB)**
-   - ALB in public subnets of a VPC.
-   - **Security group** allowing inbound 443 (and optionally 80 for redirect), outbound as needed.
-   - **Listener on 443** with an ACM certificate.
-   - **Optional listener on 80** that redirects to 443.
-   - **Lambda target group** (type: Lambda) with the Lambda function as a target.
-   - **Lambda permission** allowing the ALB target group to invoke the Lambda.
+3. **Lambda Function URL**
+   - Public Function URL for API requests.
+   - CORS allows `https://chult.oolong.com`.
 
-4. **TLS/SSL certificate (ACM)**
-   - ACM certificate for `chult.oolong.com`.
+4. **Static assets (S3 + CloudFront)**
+   - Existing S3 bucket for `client/public` assets (private, OAC access).
+   - CloudFront distribution serving the bucket by default.
+   - CloudFront behavior `/api/*` routes to the Function URL.
+   - CloudFront behavior `/health` routes to the Function URL.
+
+5. **TLS/SSL certificates (ACM)**
+   - CloudFront ACM certificate (us-east-1) for `chult.oolong.com`.
    - DNS validation via Route 53.
-   - Certificate must be in the same region as the ALB.
 
-5. **DNS (Route 53)**
+6. **DNS (Route 53)**
    - Hosted zone for `oolong.com` (already owned).
-   - **A/AAAA alias record** for `chult.oolong.com` pointing to the ALB.
+   - **A/AAAA alias record** for `chult.oolong.com` pointing to CloudFront.
    - Validation records for ACM (created automatically or manually).
 
 ## Security and hardening
-- **HTTPS-only**: enforce 443; redirect 80 to 443.
+- **HTTPS to viewers** via CloudFront.
 - **Least privilege IAM** for Lambda execution and deployment roles.
-- **WAF (AWS WAFv2)** attached to the ALB for basic protections (optional but recommended).
+- **WAF (AWS WAFv2)** attached to CloudFront for basic protections (optional but recommended).
 
 ## Networking considerations
 
-- **Dedicated VPC + public subnets** for the ALB.
-- **Internet Gateway** and route tables for public subnets.
-- Lambda itself does not need VPC access for ALB integration unless it must reach VPC-only resources.
+- Lambda remains outside a VPC for simplicity and lower latency.
 
 ## Deployment pipeline (minimum viable)
 
 - Build and push Docker image to ECR.
-- Update Lambda to the new image digest.
-- ALB forwards to Lambda target group.
-- Route 53 alias record resolves `chult.oolong.com` to the ALB.
+- Update Lambda to the new image tag.
+- Upload `client/public` to S3.
+- CloudFront serves static assets and routes `/api/*` and `/health` to the Function URL.
+- Route 53 alias record resolves `chult.oolong.com` to CloudFront.
 
 ## CDK usage
 
@@ -60,22 +60,25 @@ The CDK app uses CloudFormation parameters for account-specific details:
 - `ImageTag` (default: `latest`)
 - `EcrRepositoryName` (default: `chult-map-service`)
 - `LambdaRoleName` (default: `ChultLambdaExecutionRole`)
+- `StaticBucketName` (default: `oolong-chult-map-service-static`, must already exist)
+- `CloudFrontCertArn` (required)
+
+CloudFront certificate stack (us-east-1):
+
+- Stack name: `ChultCloudFrontCertStack`
+- Outputs: `CloudFrontCertArn`
 
 Example deploy:
 
 ```bash
 pnpm --dir infra install
 pnpm --dir infra cdk bootstrap
-pnpm --dir infra cdk deploy ChultServiceStack \\
-  --parameters HostedZoneId=Z1234567890 \\
-  --parameters HostedZoneName=oolong.com \\
-  --parameters Subdomain=chult \\
-  --parameters ImageTag=20260209173000
+pnpm --dir infra infra:up
 ```
 
 ## ACM validation note
 
-The certificate uses DNS validation via Route 53. CDK will create the validation records in the hosted zone and wait for validation to complete before finishing the deploy.
+The CloudFront certificate uses DNS validation via Route 53. CDK will create the validation records in the hosted zone and wait for validation to complete before finishing the deploy.
 
 ## Manual IAM role setup
 
@@ -84,14 +87,9 @@ Create the Lambda execution role outside this stack, then pass its name via `Lam
 Artifacts:
 
 - Trust policy: `infra/iam/lambda-trust-policy.json`
-- Script: `infra/scripts/create-lambda-role.sh`
-- Script defaults: `infra/scripts/env.sh`
+- Defaults: `infra/scripts/env.sh`
 
-Run from repo root:
-
-```bash
-pnpm --dir infra create-lambda-role
-```
+`infra:up` creates/verifies the IAM role on every run.
 
 Prerequisite:
 
@@ -118,7 +116,9 @@ From repo root:
 - `pnpm --dir infra destroy` tears down the stack.
 - `pnpm --dir infra cdk` runs any raw CDK command.
 - `pnpm ecr:push` builds the Docker image and pushes it to ECR.
-- `pnpm --dir infra deploy-latest-image` resolves the ECR digest for a tag and deploys it.
+- `pnpm --dir infra ensure-static-bucket` creates the static S3 bucket if missing.
+- `pnpm --dir infra infra:up` provisions everything (cert, image push, Lambda, CloudFront, bucket access, static sync, invalidation).
+- `pnpm --dir infra infra:down` tears down the stacks but keeps the static bucket.
 
 `pnpm ecr:push` environment overrides:
 
@@ -126,10 +126,20 @@ From repo root:
 - `IMAGE_TAG` (default: `latest`)
 - `AWS_REGION` (default: `us-west-2`)
 
-`pnpm --dir infra deploy-latest-image` environment overrides:
+`pnpm --dir infra ensure-static-bucket` environment overrides:
 
-- `HOSTED_ZONE_ID` (required)
+- `STATIC_BUCKET_NAME` (default: `oolong-chult-map-service-static`)
+- `AWS_REGION` (default: `us-west-2`)
+
+`pnpm --dir infra infra:up` environment overrides:
+- `HOSTED_ZONE_ID` (default: `Z1AXYSRIQ6QRQO`)
+- `HOSTED_ZONE_NAME` (default: `oolong.com`)
+- `SUBDOMAIN` (default: `chult`)
 - `REPO_NAME` (default: `chult-map-service`)
 - `IMAGE_TAG` (default: UTC timestamp tag)
 - `TIMESTAMP_TAG` (optional override for timestamp generation)
+- `STATIC_BUCKET_NAME` (default: `oolong-chult-map-service-static`)
 - `AWS_REGION` (default: `us-west-2`)
+ - `ROLE_NAME` (default: `ChultLambdaExecutionRole`)
+
+`pnpm --dir infra infra:down` has no environment overrides.

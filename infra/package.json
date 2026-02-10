@@ -10,8 +10,8 @@
     "synth": "cdk synth",
     "deploy": "cdk deploy",
     "destroy": "cdk destroy",
-    "create-lambda-role": "./scripts/create-lambda-role.sh",
-    "deploy-latest-image": "./scripts/deploy-latest-image.sh"
+    "infra:up": "./scripts/infra-up.sh",
+    "infra:down": "./scripts/infra-down.sh"
   },
   "devDependencies": {
     "@types/node": "22.13.5",

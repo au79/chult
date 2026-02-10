@@ -10,13 +10,14 @@ polling the service.
 
 - **Realtime-ish map state** powered by polling and Hono endpoints (Node 22+).
 - **Modular monorepo** with a shared workspace powering both the API (`server/`) and browser assets (`client/`).
-- **Lambda-compatible Docker image** that bundles the compiled server plus the published client assets.
+- **Lambda-compatible Docker image** for the API (Function URL).
+- **Static hosting** via S3 + CloudFront for large assets.
 - **Infrastructure as code** with an AWS CDK app under `infra/`.
 
 ## Tech Stack
 
 - Node.js 22 + pnpm 9 (monorepo with workspaces)
-- Hono + AWS Lambda adapter (HTTP via ALB → Lambda)
+- Hono + AWS Lambda adapter (Function URL)
 - TypeScript (server) with Vitest for tests
 - Static client assets served from `client/public`
 
@@ -69,21 +70,24 @@ docker run --rm -d -p 9876:9876 -v "$(pwd)/server/data:/var/task/server/data" ch
 
 The AWS CDK app lives in `infra/`. The production deployment uses:
 
-- ALB → Lambda (container image) → Hono AWS adapter
-- Route 53 record for `chult.oolong.com`
-- ACM certificate (DNS validated)
-- ECR repo `chult-map-service` (default `latest` tag)
+- Lambda Function URL → Hono AWS adapter (API)
+- S3 + CloudFront for static assets
+- Route 53 record for `chult.oolong.com` → CloudFront
+- ACM certificate (CloudFront in us-east-1)
+- ECR repo `chult-map-service` (timestamp tags)
 
 Useful commands:
 
 ```bash
-pnpm --dir infra create-lambda-role
-pnpm ecr:push
+pnpm --dir infra infra:up
+pnpm --dir infra infra:down
 pnpm --dir infra cdk deploy ChultServiceStack \
   --parameters HostedZoneId=Z1234567890 \
   --parameters HostedZoneName=oolong.com \
   --parameters Subdomain=chult \
-  --parameters ImageTag=20260209173000
+  --parameters ImageTag=20260209173000 \
+  --parameters StaticBucketName=oolong-chult-map-service-static \
+  --parameters CloudFrontCertArn=arn:aws:acm:us-east-1:123456789012:certificate/abc...
 ```
 
 ## Project Structure

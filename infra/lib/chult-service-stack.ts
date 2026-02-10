@@ -1,14 +1,14 @@
 import * as cdk from 'aws-cdk-lib';
 import { Construct } from 'constructs';
-import * as acm from 'aws-cdk-lib/aws-certificatemanager';
-import * as ec2 from 'aws-cdk-lib/aws-ec2';
 import * as ecr from 'aws-cdk-lib/aws-ecr';
-import * as elbv2 from 'aws-cdk-lib/aws-elasticloadbalancingv2';
-import * as elbv2Targets from 'aws-cdk-lib/aws-elasticloadbalancingv2-targets';
 import * as iam from 'aws-cdk-lib/aws-iam';
 import * as lambda from 'aws-cdk-lib/aws-lambda';
 import * as route53 from 'aws-cdk-lib/aws-route53';
 import * as route53Targets from 'aws-cdk-lib/aws-route53-targets';
+import * as s3 from 'aws-cdk-lib/aws-s3';
+import * as cloudfront from 'aws-cdk-lib/aws-cloudfront';
+import * as cloudfrontOrigins from 'aws-cdk-lib/aws-cloudfront-origins';
+import * as acm from 'aws-cdk-lib/aws-certificatemanager';
 
 export class ChultServiceStack extends cdk.Stack {
   constructor(scope: Construct, id: string, props?: cdk.StackProps) {
@@ -37,6 +37,17 @@ export class ChultServiceStack extends cdk.Stack {
       description: 'ECR image tag for the Lambda container.',
     });
 
+    const staticBucketName = new cdk.CfnParameter(this, 'StaticBucketName', {
+      type: 'String',
+      default: 'oolong-chult-map-service-static',
+      description: 'S3 bucket name for static assets.',
+    });
+
+    const cloudFrontCertArn = new cdk.CfnParameter(this, 'CloudFrontCertArn', {
+      type: 'String',
+      description: 'ACM certificate ARN in us-east-1 for CloudFront.',
+    });
+
     const ecrRepositoryName = new cdk.CfnParameter(this, 'EcrRepositoryName', {
       type: 'String',
       default: 'chult-map-service',
@@ -49,33 +60,6 @@ export class ChultServiceStack extends cdk.Stack {
       description: 'Pre-created Lambda execution role name to use for the service.',
     });
 
-    const vpc = new ec2.Vpc(this, 'ChultVpc', {
-      maxAzs: 2,
-      natGateways: 0,
-      subnetConfiguration: [
-        {
-          name: 'public',
-          subnetType: ec2.SubnetType.PUBLIC,
-        },
-      ],
-    });
-
-    const albSecurityGroup = new ec2.SecurityGroup(this, 'AlbSecurityGroup', {
-      vpc,
-      description: 'Security group for the ALB',
-      allowAllOutbound: true,
-    });
-
-    albSecurityGroup.addIngressRule(ec2.Peer.anyIpv4(), ec2.Port.tcp(443), 'HTTPS');
-    albSecurityGroup.addIngressRule(ec2.Peer.anyIpv4(), ec2.Port.tcp(80), 'HTTP redirect');
-
-    const loadBalancer = new elbv2.ApplicationLoadBalancer(this, 'ChultAlb', {
-      vpc,
-      internetFacing: true,
-      securityGroup: albSecurityGroup,
-      vpcSubnets: { subnetType: ec2.SubnetType.PUBLIC },
-    });
-
     const zone = route53.HostedZone.fromHostedZoneAttributes(this, 'HostedZone', {
       hostedZoneId: hostedZoneId.valueAsString,
       zoneName: hostedZoneName.valueAsString,
@@ -83,10 +67,11 @@ export class ChultServiceStack extends cdk.Stack {
 
     const fullDomainName = `${subdomain.valueAsString}.${hostedZoneName.valueAsString}`;
 
-    const certificate = new acm.Certificate(this, 'ChultCertificate', {
-      domainName: fullDomainName,
-      validation: acm.CertificateValidation.fromDns(zone),
-    });
+    const staticBucket = s3.Bucket.fromBucketName(
+      this,
+      'StaticAssetsBucket',
+      staticBucketName.valueAsString,
+    );
 
     const repo = ecr.Repository.fromRepositoryName(
       this,
@@ -112,38 +97,85 @@ export class ChultServiceStack extends cdk.Stack {
       },
     });
 
-    const httpsListener = loadBalancer.addListener('HttpsListener', {
-      port: 443,
-      certificates: [certificate],
-      open: true,
+    const functionUrl = handler.addFunctionUrl({
+      authType: lambda.FunctionUrlAuthType.NONE,
+      cors: {
+        allowedOrigins: [`https://${fullDomainName}`],
+        allowedMethods: [
+          lambda.HttpMethod.GET,
+          lambda.HttpMethod.POST,
+        ],
+        allowedHeaders: ['Content-Type'],
+      },
     });
 
-    httpsListener.addTargets('LambdaTarget', {
-      targets: [new elbv2Targets.LambdaTarget(handler)],
+    const s3Origin = cloudfrontOrigins.S3BucketOrigin.withOriginAccessControl(
+      staticBucket,
+    );
+
+    const apiOrigin = new cloudfrontOrigins.FunctionUrlOrigin(functionUrl);
+
+    const apiOriginRequestPolicy = new cloudfront.OriginRequestPolicy(
+      this,
+      'ApiOriginRequestPolicy',
+      {
+        headerBehavior: cloudfront.OriginRequestHeaderBehavior.allowList(
+          'Origin',
+          'Access-Control-Request-Method',
+          'Access-Control-Request-Headers',
+          'Content-Type',
+        ),
+        cookieBehavior: cloudfront.OriginRequestCookieBehavior.none(),
+        queryStringBehavior: cloudfront.OriginRequestQueryStringBehavior.all(),
+      },
+    );
+
+    const distribution = new cloudfront.Distribution(this, 'ChultDistribution', {
+      defaultRootObject: 'player.html',
+      domainNames: [fullDomainName],
+      certificate: acm.Certificate.fromCertificateArn(
+        this,
+        'CloudFrontCertificate',
+        cloudFrontCertArn.valueAsString,
+      ),
+      defaultBehavior: {
+        origin: s3Origin,
+        compress: true,
+        cachePolicy: cloudfront.CachePolicy.CACHING_OPTIMIZED,
+        viewerProtocolPolicy: cloudfront.ViewerProtocolPolicy.REDIRECT_TO_HTTPS,
+      },
+      additionalBehaviors: {
+        'api/*': {
+          origin: apiOrigin,
+          allowedMethods: cloudfront.AllowedMethods.ALLOW_ALL,
+          cachePolicy: cloudfront.CachePolicy.CACHING_DISABLED,
+          originRequestPolicy: apiOriginRequestPolicy,
+          viewerProtocolPolicy: cloudfront.ViewerProtocolPolicy.REDIRECT_TO_HTTPS,
+        },
+        health: {
+          origin: apiOrigin,
+          allowedMethods: cloudfront.AllowedMethods.ALLOW_ALL,
+          cachePolicy: cloudfront.CachePolicy.CACHING_DISABLED,
+          originRequestPolicy: apiOriginRequestPolicy,
+          viewerProtocolPolicy: cloudfront.ViewerProtocolPolicy.REDIRECT_TO_HTTPS,
+        },
+      },
     });
 
-    loadBalancer.addListener('HttpListener', {
-      port: 80,
-      open: true,
-      defaultAction: elbv2.ListenerAction.redirect({
-        protocol: 'HTTPS',
-        port: '443',
-        permanent: true,
-      }),
-    });
-
-    new route53.ARecord(this, 'AlbAliasRecord', {
+    new route53.ARecord(this, 'CloudFrontAliasRecord', {
       zone,
       recordName: subdomain.valueAsString,
-      target: route53.RecordTarget.fromAlias(new route53Targets.LoadBalancerTarget(loadBalancer)),
-    });
-
-    new cdk.CfnOutput(this, 'AlbDnsName', {
-      value: loadBalancer.loadBalancerDnsName,
+      target: route53.RecordTarget.fromAlias(
+        new route53Targets.CloudFrontTarget(distribution),
+      ),
     });
 
     new cdk.CfnOutput(this, 'EcrRepositoryUri', {
       value: repo.repositoryUri,
+    });
+
+    new cdk.CfnOutput(this, 'CloudFrontDistributionId', {
+      value: distribution.distributionId,
     });
   }
 }
