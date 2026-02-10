@@ -31,6 +31,7 @@ COPY --from=builder /app/client/public ./client/public
 
 # Ensure the data directory exists so it can be bound to a host volume.
 RUN mkdir -p /var/task/server/data
+ENV DATA_PATH=/var/task/server/data/shown-hexes.txt
 VOLUME ["/var/task/server/data"]
 
 CMD ["server/dist/lambda.handler"]

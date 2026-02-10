@@ -8,7 +8,8 @@ import { registerHexRoutes } from './routes/hexes.js';
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 const publicDir = resolve(__dirname, '../../client/public');
-const dataFile = resolve(__dirname, '../data/shown-hexes.txt');
+const dataFile =
+  process.env.DATA_PATH ?? resolve(__dirname, '../data/shown-hexes.txt');
 
 export async function createApp() {
   const app = new Hono();
