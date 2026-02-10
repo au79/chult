@@ -70,7 +70,7 @@ pnpm --dir infra cdk deploy ChultServiceStack \\
   --parameters HostedZoneId=Z1234567890 \\
   --parameters HostedZoneName=oolong.com \\
   --parameters Subdomain=chult \\
-  --parameters ImageTag=latest
+  --parameters ImageTag=20260209173000
 ```
 
 ## ACM validation note
@@ -85,6 +85,7 @@ Artifacts:
 
 - Trust policy: `infra/iam/lambda-trust-policy.json`
 - Script: `infra/scripts/create-lambda-role.sh`
+- Script defaults: `infra/scripts/env.sh`
 
 Run from repo root:
 
@@ -101,6 +102,11 @@ Optional environment variables:
 - `ROLE_NAME` (default: `ChultLambdaExecutionRole`)
 - `BOUNDARY_ARN` (if your account requires a permissions boundary)
 
+The script attaches:
+
+- `AmazonEC2ContainerRegistryReadOnly`
+- `AWSLambdaBasicExecutionRole` (for CloudWatch logs)
+
 ## Package scripts
 
 From repo root:
@@ -112,9 +118,18 @@ From repo root:
 - `pnpm --dir infra destroy` tears down the stack.
 - `pnpm --dir infra cdk` runs any raw CDK command.
 - `pnpm ecr:push` builds the Docker image and pushes it to ECR.
+- `pnpm --dir infra deploy-latest-image` resolves the ECR digest for a tag and deploys it.
 
 `pnpm ecr:push` environment overrides:
 
 - `REPO_NAME` (default: `chult-map-service`)
 - `IMAGE_TAG` (default: `latest`)
+- `AWS_REGION` (default: `us-west-2`)
+
+`pnpm --dir infra deploy-latest-image` environment overrides:
+
+- `HOSTED_ZONE_ID` (required)
+- `REPO_NAME` (default: `chult-map-service`)
+- `IMAGE_TAG` (default: UTC timestamp tag)
+- `TIMESTAMP_TAG` (optional override for timestamp generation)
 - `AWS_REGION` (default: `us-west-2`)
