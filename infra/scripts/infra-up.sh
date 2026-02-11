@@ -69,8 +69,13 @@ ensure_lambda_role() {
   "Statement": [
     {
       "Effect": "Allow",
+      "Action": ["s3:ListBucket"],
+      "Resource": "arn:aws:s3:::${SERVICE_BUCKET_NAME}"
+    },
+    {
+      "Effect": "Allow",
       "Action": ["s3:GetObject", "s3:PutObject"],
-      "Resource": "arn:aws:s3:::${STATIC_BUCKET_NAME}/*"
+      "Resource": "arn:aws:s3:::${SERVICE_BUCKET_NAME}/*"
     }
   ]
 }
@@ -96,32 +101,32 @@ EOF
   echo "Ensured AmazonEC2ContainerRegistryReadOnly and AWSLambdaBasicExecutionRole are attached."
 }
 
-ensure_static_bucket() {
-  if aws s3api head-bucket --bucket "$STATIC_BUCKET_NAME" >/dev/null 2>&1; then
-    echo "Bucket $STATIC_BUCKET_NAME already exists."
+ensure_service_bucket() {
+  if aws s3api head-bucket --bucket "$SERVICE_BUCKET_NAME" >/dev/null 2>&1; then
+    echo "Bucket $SERVICE_BUCKET_NAME already exists."
     return 0
   fi
 
-  echo "Creating bucket $STATIC_BUCKET_NAME in $AWS_REGION..."
+  echo "Creating bucket $SERVICE_BUCKET_NAME in $AWS_REGION..."
 
   if [[ "$AWS_REGION" == "us-east-1" ]]; then
-    aws s3api create-bucket --bucket "$STATIC_BUCKET_NAME"
+    aws s3api create-bucket --bucket "$SERVICE_BUCKET_NAME"
   else
     aws s3api create-bucket \
-      --bucket "$STATIC_BUCKET_NAME" \
+      --bucket "$SERVICE_BUCKET_NAME" \
       --region "$AWS_REGION" \
       --create-bucket-configuration LocationConstraint="$AWS_REGION"
   fi
 
   aws s3api put-bucket-encryption \
-    --bucket "$STATIC_BUCKET_NAME" \
+    --bucket "$SERVICE_BUCKET_NAME" \
     --server-side-encryption-configuration '{"Rules":[{"ApplyServerSideEncryptionByDefault":{"SSEAlgorithm":"AES256"}}]}'
 
   aws s3api put-public-access-block \
-    --bucket "$STATIC_BUCKET_NAME" \
+    --bucket "$SERVICE_BUCKET_NAME" \
     --public-access-block-configuration 'BlockPublicAcls=true,IgnorePublicAcls=true,BlockPublicPolicy=true,RestrictPublicBuckets=true'
 
-  echo "Bucket $STATIC_BUCKET_NAME created and locked down."
+  echo "Bucket $SERVICE_BUCKET_NAME created and locked down."
 }
 
 ensure_lambda_role
@@ -144,12 +149,12 @@ fi
 
 export IMAGE_TAG REPO_NAME AWS_REGION
 "$INFRA_DIR/scripts/push-ecr-image.sh"
-ensure_static_bucket
+ensure_service_bucket
 
 pnpm --dir "$INFRA_DIR" cdk deploy ChultServiceStack --require-approval never \
   --parameters HostedZoneId="$HOSTED_ZONE_ID" \
   --parameters ImageTag="$IMAGE_TAG" \
-  --parameters StaticBucketName="$STATIC_BUCKET_NAME" \
+  --parameters ServiceBucketName="$SERVICE_BUCKET_NAME" \
   --parameters CloudFrontCertArn="$CLOUDFRONT_CERT_ARN"
 
 DISTRIBUTION_ID=$(aws cloudformation describe-stacks \
@@ -165,12 +170,12 @@ fi
 
 ACCOUNT_ID=$(aws sts get-caller-identity --query Account --output text)
 DIST_ARN="arn:aws:cloudfront::${ACCOUNT_ID}:distribution/${DISTRIBUTION_ID}"
-OBJECT_ARN="arn:aws:s3:::${STATIC_BUCKET_NAME}/*"
+OBJECT_ARN="arn:aws:s3:::${SERVICE_BUCKET_NAME}/*"
 
 TMP_POLICY=$(mktemp)
 
-if aws s3api get-bucket-policy --bucket "$STATIC_BUCKET_NAME" >/dev/null 2>&1; then
-  aws s3api get-bucket-policy --bucket "$STATIC_BUCKET_NAME" --query Policy --output text > "$TMP_POLICY"
+if aws s3api get-bucket-policy --bucket "$SERVICE_BUCKET_NAME" >/dev/null 2>&1; then
+  aws s3api get-bucket-policy --bucket "$SERVICE_BUCKET_NAME" --query Policy --output text > "$TMP_POLICY"
 else
   echo '{"Version":"2012-10-17","Statement":[]}' > "$TMP_POLICY"
 fi
@@ -189,15 +194,15 @@ jq --arg distArn "$DIST_ARN" --arg objectArn "$OBJECT_ARN" '
     ]
 ' "$TMP_POLICY" > "$TMP_POLICY.new"
 
-aws s3api put-bucket-policy --bucket "$STATIC_BUCKET_NAME" --policy file://"$TMP_POLICY.new"
+aws s3api put-bucket-policy --bucket "$SERVICE_BUCKET_NAME" --policy file://"$TMP_POLICY.new"
 
 rm -f "$TMP_POLICY" "$TMP_POLICY.new"
 
 echo "Updated bucket policy to allow CloudFront distribution $DISTRIBUTION_ID."
 
-aws s3 sync "$ROOT_DIR/client/public" "s3://$STATIC_BUCKET_NAME" --delete
+aws s3 sync "$ROOT_DIR/client/public" "s3://$SERVICE_BUCKET_NAME" --delete
 
-echo "Synced static assets to s3://$STATIC_BUCKET_NAME"
+echo "Synced client assets to s3://$SERVICE_BUCKET_NAME"
 
 aws cloudfront create-invalidation \
   --distribution-id "$DISTRIBUTION_ID" \

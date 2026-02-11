@@ -18,7 +18,7 @@ This document lists the AWS resources needed to securely host the Docker-based s
    - Public Function URL for API requests.
    - CORS allows `https://chult.oolong.com`.
 
-4. **Static assets (S3 + CloudFront)**
+4. **Client assets (S3 + CloudFront)**
    - Existing S3 bucket for `client/public` assets (private, OAC access).
    - CloudFront distribution serving the bucket by default.
    - CloudFront behavior `/api/*` routes to the Function URL.
@@ -47,7 +47,7 @@ This document lists the AWS resources needed to securely host the Docker-based s
 - Build and push Docker image to ECR.
 - Update Lambda to the new image tag.
 - Upload `client/public` to S3.
-- CloudFront serves static assets and routes `/api/*` and `/health` to the Function URL.
+- CloudFront serves client assets and routes `/api/*` and `/health` to the Function URL.
 - Route 53 alias record resolves `chult.oolong.com` to CloudFront.
 
 ## CDK usage
@@ -60,7 +60,7 @@ The CDK app uses CloudFormation parameters for account-specific details:
 - `ImageTag` (default: `latest`)
 - `EcrRepositoryName` (default: `chult-map-service`)
 - `LambdaRoleName` (default: `ChultLambdaExecutionRole`)
-- `StaticBucketName` (default: `oolong-chult-map-service`, must already exist)
+- `ServiceBucketName` (default: `oolong-chult-map-service`, must already exist)
 - `CloudFrontCertArn` (required)
 
 CloudFront certificate stack (us-east-1):
@@ -103,7 +103,7 @@ The script attaches:
 
 - `AmazonEC2ContainerRegistryReadOnly`
 - `AWSLambdaBasicExecutionRole` (for CloudWatch logs)
-- Inline policy `ChultHexIdS3Access` for reading/writing the hex ID file in the static bucket
+- Inline policy `ChultHexIdS3Access` for reading/writing the hex ID file in the service bucket
 
 ## Package scripts
 
@@ -116,19 +116,13 @@ From repo root:
 - `pnpm --dir infra destroy` tears down the stack.
 - `pnpm --dir infra cdk` runs any raw CDK command.
 - `pnpm ecr:push` builds the Docker image and pushes it to ECR.
-- `pnpm --dir infra ensure-static-bucket` creates the static S3 bucket if missing.
-- `pnpm --dir infra infra:up` provisions everything (cert, image push, Lambda, CloudFront, bucket access, static sync, invalidation).
-- `pnpm --dir infra infra:down` tears down the stacks but keeps the static bucket.
+- `pnpm --dir infra infra:up` provisions everything (cert, image push, Lambda, CloudFront, bucket access, client asset sync, invalidation).
+- `pnpm --dir infra infra:down` tears down the stacks but keeps the service bucket.
 
 `pnpm ecr:push` environment overrides:
 
 - `REPO_NAME` (default: `chult-map-service`)
 - `IMAGE_TAG` (default: `latest`)
-- `AWS_REGION` (default: `us-west-2`)
-
-`pnpm --dir infra ensure-static-bucket` environment overrides:
-
-- `STATIC_BUCKET_NAME` (default: `oolong-chult-map-service`)
 - `AWS_REGION` (default: `us-west-2`)
 
 `pnpm --dir infra infra:up` environment overrides:
@@ -138,7 +132,7 @@ From repo root:
 - `REPO_NAME` (default: `chult-map-service`)
 - `IMAGE_TAG` (default: UTC timestamp tag)
 - `TIMESTAMP_TAG` (optional override for timestamp generation)
-- `STATIC_BUCKET_NAME` (default: `oolong-chult-map-service`)
+- `SERVICE_BUCKET_NAME` (default: `oolong-chult-map-service`, also injected into the Lambda environment)
 - `AWS_REGION` (default: `us-west-2`)
 - `ROLE_NAME` (default: `ChultLambdaExecutionRole`)
 - `HEX_ID_STORAGE` (`s3` when running in Lambda, `local` otherwise)

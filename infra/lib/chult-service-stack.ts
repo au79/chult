@@ -37,10 +37,10 @@ export class ChultServiceStack extends cdk.Stack {
       description: 'ECR image tag for the Lambda container.',
     });
 
-    const staticBucketName = new cdk.CfnParameter(this, 'StaticBucketName', {
+    const serviceBucketName = new cdk.CfnParameter(this, 'ServiceBucketName', {
       type: 'String',
       default: 'oolong-chult-map-service',
-      description: 'S3 bucket name for static assets.',
+      description: 'S3 bucket name for service assets.',
     });
 
     const cloudFrontCertArn = new cdk.CfnParameter(this, 'CloudFrontCertArn', {
@@ -67,10 +67,10 @@ export class ChultServiceStack extends cdk.Stack {
 
     const fullDomainName = `${subdomain.valueAsString}.${hostedZoneName.valueAsString}`;
 
-    const staticBucket = s3.Bucket.fromBucketName(
+    const serviceBucket = s3.Bucket.fromBucketName(
       this,
-      'StaticAssetsBucket',
-      staticBucketName.valueAsString,
+      'ServiceAssetsBucket',
+      serviceBucketName.valueAsString,
     );
 
     const repo = ecr.Repository.fromRepositoryName(
@@ -94,6 +94,7 @@ export class ChultServiceStack extends cdk.Stack {
       role: lambdaRole,
       environment: {
         DATA_PATH: '/tmp/chult/shown-hexes.txt',
+        SERVICE_BUCKET_NAME: serviceBucketName.valueAsString,
       },
     });
 
@@ -110,7 +111,7 @@ export class ChultServiceStack extends cdk.Stack {
     });
 
     const s3Origin = cloudfrontOrigins.S3BucketOrigin.withOriginAccessControl(
-      staticBucket,
+      serviceBucket,
     );
 
     const apiOrigin = new cloudfrontOrigins.FunctionUrlOrigin(functionUrl);

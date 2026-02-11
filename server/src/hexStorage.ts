@@ -3,8 +3,6 @@ import { access, mkdir, readFile, rename, writeFile } from 'node:fs/promises';
 import { basename, dirname } from 'node:path';
 import { GetObjectCommand, PutObjectCommand, S3Client } from '@aws-sdk/client-s3';
 
-const STATIC_BUCKET_NAME = 'oolong-chult-map-service';
-
 export interface HexStorageAdapter {
   init(): Promise<void>;
   read(): Promise<string>;
@@ -38,8 +36,8 @@ export class S3HexStorage implements HexStorageAdapter {
   readonly #key: string;
   readonly #client: S3Client;
 
-  constructor(filePath: string) {
-    this.#bucketName = STATIC_BUCKET_NAME;
+  constructor(bucketName: string, filePath: string) {
+    this.#bucketName = bucketName;
     this.#key = basename(filePath);
     this.#client = new S3Client({});
   }

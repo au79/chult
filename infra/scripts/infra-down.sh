@@ -16,4 +16,4 @@ pnpm --dir "$INFRA_DIR" cdk destroy ChultServiceStack --force
 # Destroy CloudFront cert stack in us-east-1.
 pnpm --dir "$INFRA_DIR" cdk destroy ChultCloudFrontCertStack --force
 
-echo "Infra down complete. Static bucket preserved: $STATIC_BUCKET_NAME"
+echo "Infra down complete. Service bucket preserved: $SERVICE_BUCKET_NAME"

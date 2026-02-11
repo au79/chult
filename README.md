@@ -11,7 +11,7 @@ polling the service.
 - **Realtime-ish map state** powered by polling and Hono endpoints (Node 22+).
 - **Modular monorepo** with a shared workspace powering both the API (`server/`) and browser assets (`client/`).
 - **Lambda-compatible Docker image** for the API (Function URL).
-- **Static hosting** via S3 + CloudFront for large assets.
+- **Client hosting** via S3 + CloudFront for large assets.
 - **Infrastructure as code** with an AWS CDK app under `infra/`.
 
 ## Tech Stack
@@ -19,7 +19,7 @@ polling the service.
 - Node.js 22 + pnpm 9 (monorepo with workspaces)
 - Hono + AWS Lambda adapter (Function URL)
 - TypeScript (server) with Vitest for tests
-- Static client assets served from `client/public`
+- Client assets served from `client/public`
 
 ## Getting Started
 
@@ -71,7 +71,7 @@ docker run --rm -d -p 9876:9876 -v "$(pwd)/server/data:/var/task/server/data" ch
 The AWS CDK app lives in `infra/`. The production deployment uses:
 
 - Lambda Function URL → Hono AWS adapter (API)
-- S3 + CloudFront for static assets
+- S3 + CloudFront for client assets
 - Route 53 record for `chult.oolong.com` → CloudFront
 - ACM certificate (CloudFront in us-east-1)
 - ECR repo `chult-map-service` (timestamp tags)
@@ -86,17 +86,17 @@ pnpm --dir infra cdk deploy ChultServiceStack \
   --parameters HostedZoneName=oolong.com \
   --parameters Subdomain=chult \
   --parameters ImageTag=20260209173000 \
-  --parameters StaticBucketName=oolong-chult-map-service \
+  --parameters ServiceBucketName=oolong-chult-map-service \
   --parameters CloudFrontCertArn=arn:aws:acm:us-east-1:123456789012:certificate/abc...
 ```
 
-Hex ID storage defaults to S3 when running in Lambda and local `DATA_PATH` otherwise. Override with `HEX_ID_STORAGE=local|s3`.
+Hex ID storage defaults to S3 when running in Lambda and local `DATA_PATH` otherwise. Override with `HEX_ID_STORAGE=local|s3` and `SERVICE_BUCKET_NAME`.
 
 ## Project Structure
 
 ```
 .
-├── client/      # Client package (static assets + formatting/tests)
+├── client/      # Client package (client assets + formatting/tests)
 ├── server/      # Hono service source, TypeScript build, tests
 ├── shared/      # Shared types
 ├── infra/       # AWS CDK app + scripts
