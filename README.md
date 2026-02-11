@@ -86,9 +86,11 @@ pnpm --dir infra cdk deploy ChultServiceStack \
   --parameters HostedZoneName=oolong.com \
   --parameters Subdomain=chult \
   --parameters ImageTag=20260209173000 \
-  --parameters StaticBucketName=oolong-chult-map-service-static \
+  --parameters StaticBucketName=oolong-chult-map-service \
   --parameters CloudFrontCertArn=arn:aws:acm:us-east-1:123456789012:certificate/abc...
 ```
+
+Hex ID storage defaults to S3 when running in Lambda and local `DATA_PATH` otherwise. Override with `HEX_ID_STORAGE=local|s3`.
 
 ## Project Structure
 

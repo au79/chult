@@ -1,8 +1,9 @@
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
-import { mkdtemp, readFile, rm, writeFile } from 'node:fs/promises';
+import { mkdtemp, readFile, rm } from 'node:fs/promises';
 import { describe, expect, beforeEach, afterEach, it } from 'vitest';
 import { HexStore } from '../hexStore.js';
+import { LocalHexStorage } from '../hexStorage.js';
 
 describe('HexStore', () => {
   let tempDir: string;
@@ -12,7 +13,7 @@ describe('HexStore', () => {
   beforeEach(async () => {
     tempDir = await mkdtemp(join(tmpdir(), 'hex-store-'));
     filePath = join(tempDir, 'hexes.txt');
-    store = new HexStore(filePath);
+    store = new HexStore(new LocalHexStorage(filePath));
     await store.init();
   });
 

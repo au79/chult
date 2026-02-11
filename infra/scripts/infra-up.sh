@@ -63,6 +63,26 @@ ensure_lambda_role() {
     exit 1
   fi
 
+  s3_policy=$(cat <<EOF
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Effect": "Allow",
+      "Action": ["s3:GetObject", "s3:PutObject"],
+      "Resource": "arn:aws:s3:::${STATIC_BUCKET_NAME}/*"
+    }
+  ]
+}
+EOF
+)
+
+  aws iam put-role-policy \
+    --role-name "$ROLE_NAME" \
+    --policy-name "ChultHexIdS3Access" \
+    --policy-document "$s3_policy" \
+    >/dev/null
+
   aws iam attach-role-policy \
     --role-name "$ROLE_NAME" \
     --policy-arn arn:aws:iam::aws:policy/AmazonEC2ContainerRegistryReadOnly \

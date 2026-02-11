@@ -60,7 +60,7 @@ The CDK app uses CloudFormation parameters for account-specific details:
 - `ImageTag` (default: `latest`)
 - `EcrRepositoryName` (default: `chult-map-service`)
 - `LambdaRoleName` (default: `ChultLambdaExecutionRole`)
-- `StaticBucketName` (default: `oolong-chult-map-service-static`, must already exist)
+- `StaticBucketName` (default: `oolong-chult-map-service`, must already exist)
 - `CloudFrontCertArn` (required)
 
 CloudFront certificate stack (us-east-1):
@@ -98,12 +98,12 @@ Prerequisite:
 Optional environment variables:
 
 - `ROLE_NAME` (default: `ChultLambdaExecutionRole`)
-- `BOUNDARY_ARN` (if your account requires a permissions boundary)
 
 The script attaches:
 
 - `AmazonEC2ContainerRegistryReadOnly`
 - `AWSLambdaBasicExecutionRole` (for CloudWatch logs)
+- Inline policy `ChultHexIdS3Access` for reading/writing the hex ID file in the static bucket
 
 ## Package scripts
 
@@ -128,7 +128,7 @@ From repo root:
 
 `pnpm --dir infra ensure-static-bucket` environment overrides:
 
-- `STATIC_BUCKET_NAME` (default: `oolong-chult-map-service-static`)
+- `STATIC_BUCKET_NAME` (default: `oolong-chult-map-service`)
 - `AWS_REGION` (default: `us-west-2`)
 
 `pnpm --dir infra infra:up` environment overrides:
@@ -138,8 +138,11 @@ From repo root:
 - `REPO_NAME` (default: `chult-map-service`)
 - `IMAGE_TAG` (default: UTC timestamp tag)
 - `TIMESTAMP_TAG` (optional override for timestamp generation)
-- `STATIC_BUCKET_NAME` (default: `oolong-chult-map-service-static`)
+- `STATIC_BUCKET_NAME` (default: `oolong-chult-map-service`)
 - `AWS_REGION` (default: `us-west-2`)
- - `ROLE_NAME` (default: `ChultLambdaExecutionRole`)
+- `ROLE_NAME` (default: `ChultLambdaExecutionRole`)
+- `HEX_ID_STORAGE` (`s3` when running in Lambda, `local` otherwise)
 
 `pnpm --dir infra infra:down` has no environment overrides.
+
+Hex IDs are stored in S3 under the same filename as the local data file (default `shown-hexes.txt`).

@@ -14,10 +14,10 @@
     "infra:down": "./scripts/infra-down.sh"
   },
   "devDependencies": {
-    "@types/node": "22.13.5",
+    "@types/node": "22.19.11",
     "aws-cdk": "2.1105.0",
     "ts-node": "10.9.2",
-    "typescript": "5.6.3"
+    "typescript": "5.9.3"
   },
   "dependencies": {
     "aws-cdk-lib": "2.238.0",

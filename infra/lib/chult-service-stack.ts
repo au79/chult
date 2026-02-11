@@ -39,7 +39,7 @@ export class ChultServiceStack extends cdk.Stack {
 
     const staticBucketName = new cdk.CfnParameter(this, 'StaticBucketName', {
       type: 'String',
-      default: 'oolong-chult-map-service-static',
+      default: 'oolong-chult-map-service',
       description: 'S3 bucket name for static assets.',
     });
 
