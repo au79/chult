@@ -17,7 +17,9 @@ declare module '#shared/hexes' {
       ? never
       : T;
 
+  // Persisted hex identifiers must be positive integers only.
   export type HexId<T extends number = number> = PositiveInteger<T>;
+  // Signed operation values: negative reveals, positive covers, zero is invalid.
   export type HexInstruction<T extends number = number> = NonZeroInteger<T>;
 
   export interface HexInstructionPayload<T extends number = number> {
@@ -25,4 +27,6 @@ declare module '#shared/hexes' {
   }
 
   export type RevealedHexes<T extends number = number> = { hexes: HexId<T>[] };
+
+  export type StorageType = 'local' | 's3' | 'dynamodb';
 }

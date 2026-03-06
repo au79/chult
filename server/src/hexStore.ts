@@ -1,6 +1,7 @@
 import { EventEmitter } from 'node:events';
 import type { HexId, HexInstruction, RevealedHexes } from '#shared/hexes';
-import type { HexStorageAdapter } from './hexStorage.js';
+import type { AtomicHexStorageAdapter, HexStorageAdapter } from './hexStorage.js';
+import { normalizeHexIds } from './hexIds.js';
 
 const NEWLINE = '\n';
 
@@ -26,7 +27,7 @@ export class HexStore extends EventEmitter {
    */
   async init() {
     await this.#storage.init();
-    this.#hexes = await this.#readFromStorage();
+    this.#hexes = await this.getLatest();
   }
 
   /**
@@ -34,6 +35,14 @@ export class HexStore extends EventEmitter {
    */
   getAll(): HexId[] {
     return [...this.#hexes];
+  }
+
+  /**
+   * Reads canonical state from storage and refreshes in-memory cache.
+   */
+  async getLatest(): Promise<HexId[]> {
+    this.#hexes = await this.#readFromStorage();
+    return this.getAll();
   }
 
   /**
@@ -47,6 +56,17 @@ export class HexStore extends EventEmitter {
     }
 
     this.#operationQueue = this.#operationQueue.then(async () => {
+      if (isAtomicStorageAdapter(this.#storage)) {
+        const nextHexes = await this.#storage.applyHexIdChange(
+          value as HexInstruction,
+        );
+        if (!haveSameHexes(this.#hexes, nextHexes)) {
+          this.#hexes = nextHexes;
+          this.emit('change', { hexes: this.getAll() } satisfies RevealedHexes);
+        }
+        return;
+      }
+
       const targetId = Math.abs(value) as HexId;
       const shouldReveal = value < 0;
 
@@ -67,7 +87,7 @@ export class HexStore extends EventEmitter {
       }
 
       const nextHexes = normalizeHexIds([...currentSet.values()]);
-      await this.#writeToDisk(nextHexes);
+      await this.#writeToStorage(nextHexes);
     });
 
     await this.#operationQueue;
@@ -77,7 +97,7 @@ export class HexStore extends EventEmitter {
   /**
    * Persists the provided list while ensuring sequential writes.
    */
-  async #writeToDisk(next: HexId[]) {
+  async #writeToStorage(next: HexId[]) {
     const serialized = next.join(NEWLINE) + (next.length ? NEWLINE : '');
     await this.#storage.write(serialized);
     this.#hexes = next;
@@ -104,13 +124,13 @@ export class HexStore extends EventEmitter {
   }
 }
 
-/**
- * Returns a deduped, sorted list of positive integers.
- */
-function normalizeHexIds(values: number[]): HexId[] {
-  return Array.from(
-    new Set(values.filter((value) => Number.isInteger(value) && value > 0)),
-  )
-    .sort((a, b) => a - b)
-    .map((value) => value as HexId);
+function isAtomicStorageAdapter(
+  storage: HexStorageAdapter,
+): storage is AtomicHexStorageAdapter {
+  return 'applyHexIdChange' in storage;
+}
+
+function haveSameHexes(current: HexId[], next: HexId[]) {
+  if (current.length !== next.length) return false;
+  return current.every((value, index) => value === next[index]);
 }

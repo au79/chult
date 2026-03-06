@@ -1,9 +1,10 @@
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { mkdtemp, readFile, rm } from 'node:fs/promises';
-import { describe, expect, beforeEach, afterEach, it } from 'vitest';
+import { describe, expect, beforeEach, afterEach, it, vi } from 'vitest';
 import { HexStore } from '../hexStore.js';
 import { LocalHexStorage } from '../hexStorage.js';
+import type { HexInstruction } from '#shared/hexes';
 
 describe('HexStore', () => {
   let tempDir: string;
@@ -66,5 +67,26 @@ describe('HexStore', () => {
 
     const raw = await readFile(filePath, 'utf8');
     expect(raw.trim().split('\n')).toEqual(['9', '10', '11']);
+  });
+
+  it('uses atomic adapter operations when available', async () => {
+    class AtomicStorage {
+      read = vi.fn(async () => '3\n');
+      write = vi.fn(async () => undefined);
+      init = vi.fn(async () => undefined);
+      applyHexIdChange = vi.fn(async (value: HexInstruction) => {
+        return value < 0 ? [3, Math.abs(value)] : [3];
+      });
+    }
+
+    const storage = new AtomicStorage();
+    const atomicStore = new HexStore(storage as any);
+    await atomicStore.init();
+
+    await atomicStore.applyHexIdChange(-9);
+
+    expect(storage.applyHexIdChange).toHaveBeenCalledWith(-9);
+    expect(storage.write).not.toHaveBeenCalled();
+    expect(atomicStore.getAll()).toEqual([3, 9]);
   });
 });

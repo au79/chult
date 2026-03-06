@@ -3,8 +3,16 @@ import type { Hono } from 'hono';
 import { HexStore } from '../hexStore.js';
 
 export function registerHexRoutes(app: Hono, store: HexStore) {
-  app.get('/api/hexes', (c) => {
-    return c.json({ hexes: store.getAll() });
+  app.get('/api/hexes', async (c) => {
+    try {
+      const hexes = await store.getLatest();
+      return c.json({ hexes });
+    } catch (error) {
+      return c.json(
+        { error: (error as Error).message ?? 'Failed to read hex state' },
+        500,
+      );
+    }
   });
 
   app.post('/api/hexes', async (c) => {

@@ -8,7 +8,7 @@ class FakeStore {
   applyHexIdChange = vi.fn(async (_value: HexInstruction<number>) => {
     return this.hexes;
   });
-  getAll() {
+  async getLatest() {
     return [...this.hexes];
   }
 }
