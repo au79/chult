@@ -8,6 +8,7 @@ import * as route53Targets from 'aws-cdk-lib/aws-route53-targets';
 import * as s3 from 'aws-cdk-lib/aws-s3';
 import * as cloudfront from 'aws-cdk-lib/aws-cloudfront';
 import * as cloudfrontOrigins from 'aws-cdk-lib/aws-cloudfront-origins';
+import * as dynamodb from 'aws-cdk-lib/aws-dynamodb';
 
 export class ChultServiceStack extends cdk.Stack {
   constructor(scope: Construct, id: string, props?: cdk.StackProps) {
@@ -61,6 +62,20 @@ export class ChultServiceStack extends cdk.Stack {
       description: 'Pre-created Lambda execution role name to use for the service.',
     });
 
+    const hexesTableName = new cdk.CfnParameter(this, 'HexesTableNameParam', {
+      type: 'String',
+      default: 'chult-map-hexes',
+      description: 'DynamoDB table name for revealed hex state.',
+    });
+    hexesTableName.overrideLogicalId('HexesTableName');
+
+    const hexesMapId = new cdk.CfnParameter(this, 'HexesMapIdParam', {
+      type: 'String',
+      default: 'default',
+      description: 'Map partition key to use within DynamoDB hex state table.',
+    });
+    hexesMapId.overrideLogicalId('HexesMapId');
+
     const fullDomainName = `${subdomain.valueAsString}.${hostedZoneName.valueAsString}`;
 
     const useDefaultServiceBucketName = new cdk.CfnCondition(
@@ -97,6 +112,12 @@ export class ChultServiceStack extends cdk.Stack {
       lambdaRoleName.valueAsString,
     );
 
+    const hexesTable = dynamodb.Table.fromTableName(
+      this,
+      'HexesTable',
+      hexesTableName.valueAsString,
+    );
+
     const useCustomDomain = new cdk.CfnCondition(this, 'UseCustomDomain', {
       expression: cdk.Fn.conditionAnd(
         cdk.Fn.conditionNot(cdk.Fn.conditionEquals(hostedZoneId.valueAsString, '')),
@@ -117,6 +138,9 @@ export class ChultServiceStack extends cdk.Stack {
       environment: {
         DATA_PATH: '/tmp/chult/shown-hexes.txt',
         SERVICE_BUCKET_NAME: resolvedServiceBucketName,
+        HEX_ID_STORAGE: 'dynamodb',
+        HEX_DDB_TABLE_NAME: hexesTable.tableName,
+        HEX_DDB_MAP_ID: hexesMapId.valueAsString,
       },
     });
 
@@ -213,6 +237,10 @@ export class ChultServiceStack extends cdk.Stack {
 
     new cdk.CfnOutput(this, 'CloudFrontDistributionId', {
       value: distribution.distributionId,
+    });
+
+    new cdk.CfnOutput(this, 'HexesTableName', {
+      value: hexesTableName.valueAsString,
     });
   }
 }

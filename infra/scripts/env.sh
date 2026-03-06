@@ -18,3 +18,4 @@ IMAGE_TAG=${IMAGE_TAG:-}
 AWS_REGION=${AWS_REGION:-${AWS_DEFAULT_REGION:-us-west-2}}
 ROLE_NAME=${ROLE_NAME:-ChultLambdaExecutionRole}
 SERVICE_BUCKET_NAME=${SERVICE_BUCKET_NAME:-oolong-chult-map-service}
+HEXES_TABLE_NAME=${HEXES_TABLE_NAME:-chult-map-hexes}

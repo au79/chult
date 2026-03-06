@@ -66,6 +66,7 @@ else
 fi
 echo "  ROLE_NAME=$ROLE_NAME"
 echo "  SERVICE_BUCKET_NAME=$SERVICE_BUCKET_NAME"
+echo "  HEXES_TABLE_NAME=$HEXES_TABLE_NAME"
 echo "  REPO_NAME=$REPO_NAME"
 echo "  IMAGE_TAG=$IMAGE_TAG"
 
@@ -113,6 +114,17 @@ ensure_lambda_role() {
       "Effect": "Allow",
       "Action": ["s3:GetObject", "s3:PutObject"],
       "Resource": "arn:aws:s3:::${SERVICE_BUCKET_NAME}/*"
+    },
+    {
+      "Effect": "Allow",
+      "Action": [
+        "dynamodb:DescribeTable",
+        "dynamodb:Query",
+        "dynamodb:PutItem",
+        "dynamodb:DeleteItem",
+        "dynamodb:BatchWriteItem"
+      ],
+      "Resource": "arn:aws:dynamodb:${AWS_REGION}:*:table/${HEXES_TABLE_NAME}"
     }
   ]
 }
@@ -166,6 +178,31 @@ ensure_service_bucket() {
   echo "Bucket $SERVICE_BUCKET_NAME created and locked down."
 }
 
+ensure_hexes_table() {
+  if aws dynamodb describe-table --table-name "$HEXES_TABLE_NAME" --region "$AWS_REGION" >/dev/null 2>&1; then
+    echo "DynamoDB table $HEXES_TABLE_NAME already exists."
+    return 0
+  fi
+
+  echo "Creating DynamoDB table $HEXES_TABLE_NAME in $AWS_REGION..."
+  aws dynamodb create-table \
+    --table-name "$HEXES_TABLE_NAME" \
+    --attribute-definitions \
+      AttributeName=mapId,AttributeType=S \
+      AttributeName=hexId,AttributeType=N \
+    --key-schema \
+      AttributeName=mapId,KeyType=HASH \
+      AttributeName=hexId,KeyType=RANGE \
+    --billing-mode PAY_PER_REQUEST \
+    --region "$AWS_REGION" \
+    >/dev/null
+
+  aws dynamodb wait table-exists \
+    --table-name "$HEXES_TABLE_NAME" \
+    --region "$AWS_REGION"
+  echo "DynamoDB table $HEXES_TABLE_NAME is ready."
+}
+
 ensure_lambda_role
 
 CLOUDFRONT_CERT_ARN=""
@@ -193,10 +230,12 @@ fi
 export IMAGE_TAG REPO_NAME AWS_REGION
 "$INFRA_DIR/scripts/push-ecr-image.sh"
 ensure_service_bucket
+ensure_hexes_table
 
 service_deploy_args=(
   --parameters ImageTag="$IMAGE_TAG"
   --parameters ServiceBucketName="$SERVICE_BUCKET_NAME"
+  --parameters HexesTableName="$HEXES_TABLE_NAME"
 )
 
 if [[ $USE_CUSTOM_DOMAIN -eq 1 ]]; then
