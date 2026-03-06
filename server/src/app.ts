@@ -28,6 +28,30 @@ export async function createApp() {
 
   await hexStore.init();
 
+  app.use('*', async (c, next) => {
+    const origin = c.req.header('origin');
+    const host = c.req.header('host');
+    const expectedOrigin = host ? `https://${host}` : null;
+    const allowOrigin = origin && expectedOrigin && origin === expectedOrigin;
+
+    if (c.req.method === 'OPTIONS') {
+      if (allowOrigin) {
+        c.header('Access-Control-Allow-Origin', origin);
+        c.header('Access-Control-Allow-Methods', 'GET,POST,OPTIONS');
+        c.header('Access-Control-Allow-Headers', 'Content-Type');
+        c.header('Vary', 'Origin');
+      }
+      return c.body(null, 204);
+    }
+
+    await next();
+
+    if (allowOrigin) {
+      c.header('Access-Control-Allow-Origin', origin);
+      c.header('Vary', 'Origin');
+    }
+  });
+
   app.get('/health', (c) => c.json({ status: 'ok' }));
   registerHexRoutes(app, hexStore);
 

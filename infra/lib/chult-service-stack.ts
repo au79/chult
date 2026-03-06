@@ -8,7 +8,6 @@ import * as route53Targets from 'aws-cdk-lib/aws-route53-targets';
 import * as s3 from 'aws-cdk-lib/aws-s3';
 import * as cloudfront from 'aws-cdk-lib/aws-cloudfront';
 import * as cloudfrontOrigins from 'aws-cdk-lib/aws-cloudfront-origins';
-import * as acm from 'aws-cdk-lib/aws-certificatemanager';
 
 export class ChultServiceStack extends cdk.Stack {
   constructor(scope: Construct, id: string, props?: cdk.StackProps) {
@@ -16,19 +15,20 @@ export class ChultServiceStack extends cdk.Stack {
 
     const hostedZoneId = new cdk.CfnParameter(this, 'HostedZoneId', {
       type: 'String',
-      description: 'Route 53 hosted zone ID for oolong.com',
+      default: '',
+      description: 'Route 53 hosted zone ID for custom domain (optional).',
     });
 
     const hostedZoneName = new cdk.CfnParameter(this, 'HostedZoneName', {
       type: 'String',
-      default: 'oolong.com',
-      description: 'Route 53 hosted zone name (no trailing dot).',
+      default: '',
+      description: 'Route 53 hosted zone name (no trailing dot, optional).',
     });
 
     const subdomain = new cdk.CfnParameter(this, 'Subdomain', {
       type: 'String',
-      default: 'chult',
-      description: 'Subdomain label to use for the service (no zone suffix).',
+      default: '',
+      description: 'Subdomain label to use for the service (no zone suffix, optional).',
     });
 
     const imageTag = new cdk.CfnParameter(this, 'ImageTag', {
@@ -39,13 +39,14 @@ export class ChultServiceStack extends cdk.Stack {
 
     const serviceBucketName = new cdk.CfnParameter(this, 'ServiceBucketName', {
       type: 'String',
-      default: 'oolong-chult-map-service',
-      description: 'S3 bucket name for service assets.',
+      default: '',
+      description: 'S3 bucket name for service assets (optional).',
     });
 
     const cloudFrontCertArn = new cdk.CfnParameter(this, 'CloudFrontCertArn', {
       type: 'String',
-      description: 'ACM certificate ARN in us-east-1 for CloudFront.',
+      default: '',
+      description: 'ACM certificate ARN in us-east-1 for CloudFront (optional).',
     });
 
     const ecrRepositoryName = new cdk.CfnParameter(this, 'EcrRepositoryName', {
@@ -60,17 +61,28 @@ export class ChultServiceStack extends cdk.Stack {
       description: 'Pre-created Lambda execution role name to use for the service.',
     });
 
-    const zone = route53.HostedZone.fromHostedZoneAttributes(this, 'HostedZone', {
-      hostedZoneId: hostedZoneId.valueAsString,
-      zoneName: hostedZoneName.valueAsString,
-    });
-
     const fullDomainName = `${subdomain.valueAsString}.${hostedZoneName.valueAsString}`;
+
+    const useDefaultServiceBucketName = new cdk.CfnCondition(
+      this,
+      'UseDefaultServiceBucketName',
+      {
+        expression: cdk.Fn.conditionEquals(
+          serviceBucketName.valueAsString,
+          '',
+        ),
+      },
+    );
+    const resolvedServiceBucketName = cdk.Fn.conditionIf(
+      useDefaultServiceBucketName.logicalId,
+      cdk.Fn.sub('chult-map-service-${AWS::AccountId}-${AWS::Region}'),
+      serviceBucketName.valueAsString,
+    ) as unknown as string;
 
     const serviceBucket = s3.Bucket.fromBucketName(
       this,
       'ServiceAssetsBucket',
-      serviceBucketName.valueAsString,
+      resolvedServiceBucketName,
     );
 
     const repo = ecr.Repository.fromRepositoryName(
@@ -85,6 +97,16 @@ export class ChultServiceStack extends cdk.Stack {
       lambdaRoleName.valueAsString,
     );
 
+    const useCustomDomain = new cdk.CfnCondition(this, 'UseCustomDomain', {
+      expression: cdk.Fn.conditionAnd(
+        cdk.Fn.conditionNot(cdk.Fn.conditionEquals(hostedZoneId.valueAsString, '')),
+        cdk.Fn.conditionNot(cdk.Fn.conditionEquals(hostedZoneName.valueAsString, '')),
+        cdk.Fn.conditionNot(cdk.Fn.conditionEquals(subdomain.valueAsString, '')),
+        cdk.Fn.conditionNot(cdk.Fn.conditionEquals(cloudFrontCertArn.valueAsString, '')),
+      ),
+    });
+
+    let distribution: cloudfront.Distribution;
     const handler = new lambda.DockerImageFunction(this, 'ChultHandler', {
       code: lambda.DockerImageCode.fromEcr(repo, {
         tagOrDigest: imageTag.valueAsString,
@@ -94,20 +116,12 @@ export class ChultServiceStack extends cdk.Stack {
       role: lambdaRole,
       environment: {
         DATA_PATH: '/tmp/chult/shown-hexes.txt',
-        SERVICE_BUCKET_NAME: serviceBucketName.valueAsString,
+        SERVICE_BUCKET_NAME: resolvedServiceBucketName,
       },
     });
 
     const functionUrl = handler.addFunctionUrl({
       authType: lambda.FunctionUrlAuthType.NONE,
-      cors: {
-        allowedOrigins: [`https://${fullDomainName}`],
-        allowedMethods: [
-          lambda.HttpMethod.GET,
-          lambda.HttpMethod.POST,
-        ],
-        allowedHeaders: ['Content-Type'],
-      },
     });
 
     const s3Origin = cloudfrontOrigins.S3BucketOrigin.withOriginAccessControl(
@@ -131,14 +145,8 @@ export class ChultServiceStack extends cdk.Stack {
       },
     );
 
-    const distribution = new cloudfront.Distribution(this, 'ChultDistribution', {
+    distribution = new cloudfront.Distribution(this, 'ChultDistribution', {
       defaultRootObject: 'player.html',
-      domainNames: [fullDomainName],
-      certificate: acm.Certificate.fromCertificateArn(
-        this,
-        'CloudFrontCertificate',
-        cloudFrontCertArn.valueAsString,
-      ),
       defaultBehavior: {
         origin: s3Origin,
         compress: true,
@@ -163,16 +171,44 @@ export class ChultServiceStack extends cdk.Stack {
       },
     });
 
-    new route53.ARecord(this, 'CloudFrontAliasRecord', {
+    const cfnDistribution = distribution.node.defaultChild as cloudfront.CfnDistribution;
+    cfnDistribution.addPropertyOverride(
+      'DistributionConfig.Aliases',
+      cdk.Fn.conditionIf(useCustomDomain.logicalId, [fullDomainName], cdk.Aws.NO_VALUE),
+    );
+    cfnDistribution.addPropertyOverride(
+      'DistributionConfig.ViewerCertificate',
+      cdk.Fn.conditionIf(
+        useCustomDomain.logicalId,
+        {
+          AcmCertificateArn: cloudFrontCertArn.valueAsString,
+          SslSupportMethod: 'sni-only',
+          MinimumProtocolVersion: 'TLSv1.2_2021',
+        },
+        cdk.Aws.NO_VALUE,
+      ),
+    );
+
+    const zone = route53.HostedZone.fromHostedZoneAttributes(this, 'HostedZone', {
+      hostedZoneId: hostedZoneId.valueAsString,
+      zoneName: hostedZoneName.valueAsString,
+    });
+    const aliasRecord = new route53.ARecord(this, 'CloudFrontAliasRecord', {
       zone,
       recordName: subdomain.valueAsString,
       target: route53.RecordTarget.fromAlias(
         new route53Targets.CloudFrontTarget(distribution),
       ),
     });
+    (aliasRecord.node.defaultChild as route53.CfnRecordSet).cfnOptions.condition =
+      useCustomDomain;
 
     new cdk.CfnOutput(this, 'EcrRepositoryUri', {
       value: repo.repositoryUri,
+    });
+
+    new cdk.CfnOutput(this, 'CloudFrontDomainName', {
+      value: distribution.domainName,
     });
 
     new cdk.CfnOutput(this, 'CloudFrontDistributionId', {

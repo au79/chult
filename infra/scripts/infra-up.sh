@@ -6,15 +6,34 @@ INFRA_DIR=$(cd "$SCRIPT_DIR/.." && pwd)
 ROOT_DIR=$(cd "$INFRA_DIR/.." && pwd)
 source "$SCRIPT_DIR/env.sh"
 
-HOSTED_ZONE_ID=${HOSTED_ZONE_ID:-Z1AXYSRIQ6QRQO}
-HOSTED_ZONE_NAME=${HOSTED_ZONE_NAME:-oolong.com}
-SUBDOMAIN=${SUBDOMAIN:-chult}
+HOSTED_ZONE_ID=${HOSTED_ZONE_ID:-}
+HOSTED_ZONE_NAME=${HOSTED_ZONE_NAME:-}
+SUBDOMAIN=${SUBDOMAIN:-}
 TIMESTAMP_TAG=${TIMESTAMP_TAG:-$(date -u +"%Y%m%d%H%M%S")}
 IMAGE_TAG=${IMAGE_TAG:-$TIMESTAMP_TAG}
 
-if [[ -z "$HOSTED_ZONE_ID" ]]; then
-  echo "ERROR: HOSTED_ZONE_ID is required."
-  exit 1
+HAS_HOSTED_ZONE_ID=0
+HAS_HOSTED_ZONE_NAME=0
+HAS_SUBDOMAIN=0
+
+if [[ -n "$HOSTED_ZONE_ID" ]]; then
+  HAS_HOSTED_ZONE_ID=1
+fi
+if [[ -n "$HOSTED_ZONE_NAME" ]]; then
+  HAS_HOSTED_ZONE_NAME=1
+fi
+if [[ -n "$SUBDOMAIN" ]]; then
+  HAS_SUBDOMAIN=1
+fi
+
+USE_CUSTOM_DOMAIN=0
+if [[ $HAS_HOSTED_ZONE_ID -eq 1 || $HAS_HOSTED_ZONE_NAME -eq 1 || $HAS_SUBDOMAIN -eq 1 ]]; then
+  if [[ $HAS_HOSTED_ZONE_ID -eq 1 && $HAS_HOSTED_ZONE_NAME -eq 1 && $HAS_SUBDOMAIN -eq 1 ]]; then
+    USE_CUSTOM_DOMAIN=1
+  else
+    echo "ERROR: Custom domain requires HOSTED_ZONE_ID, HOSTED_ZONE_NAME, and SUBDOMAIN together."
+    exit 1
+  fi
 fi
 
 if ! command -v aws >/dev/null 2>&1; then
@@ -31,6 +50,24 @@ if ! command -v pnpm >/dev/null 2>&1; then
   echo "ERROR: pnpm is required but was not found in PATH."
   exit 1
 fi
+
+echo "Infra config:"
+echo "  ENV_FILE=${ENV_FILE:-$INFRA_DIR/.env}"
+echo "  AWS_REGION=$AWS_REGION"
+echo "  HOSTED_ZONE_ID=$HOSTED_ZONE_ID"
+echo "  HOSTED_ZONE_NAME=$HOSTED_ZONE_NAME"
+echo "  SUBDOMAIN=$SUBDOMAIN"
+if [[ $USE_CUSTOM_DOMAIN -eq 1 ]]; then
+  echo "  CUSTOM_DOMAIN_MODE=enabled"
+  echo "  FULL_DOMAIN=${SUBDOMAIN}.${HOSTED_ZONE_NAME}"
+else
+  echo "  CUSTOM_DOMAIN_MODE=disabled (using CloudFront default domain)"
+  echo "  FULL_DOMAIN=(none)"
+fi
+echo "  ROLE_NAME=$ROLE_NAME"
+echo "  SERVICE_BUCKET_NAME=$SERVICE_BUCKET_NAME"
+echo "  REPO_NAME=$REPO_NAME"
+echo "  IMAGE_TAG=$IMAGE_TAG"
 
 ensure_lambda_role() {
   TRUST_POLICY_PATH="$INFRA_DIR/iam/lambda-trust-policy.json"
@@ -131,31 +168,51 @@ ensure_service_bucket() {
 
 ensure_lambda_role
 
-pnpm --dir "$INFRA_DIR" cdk deploy ChultCloudFrontCertStack --require-approval never \
-  --parameters HostedZoneId="$HOSTED_ZONE_ID" \
-  --parameters HostedZoneName="$HOSTED_ZONE_NAME" \
-  --parameters Subdomain="$SUBDOMAIN"
+CLOUDFRONT_CERT_ARN=""
+if [[ $USE_CUSTOM_DOMAIN -eq 1 ]]; then
+  echo "Deploying ChultCloudFrontCertStack with custom-domain parameters..."
+  pnpm --dir "$INFRA_DIR" cdk deploy ChultCloudFrontCertStack --require-approval never \
+    --parameters HostedZoneId="$HOSTED_ZONE_ID" \
+    --parameters HostedZoneName="$HOSTED_ZONE_NAME" \
+    --parameters Subdomain="$SUBDOMAIN"
 
-CLOUDFRONT_CERT_ARN=$(aws cloudformation describe-stacks \
-  --stack-name ChultCloudFrontCertStack \
-  --region us-east-1 \
-  --query 'Stacks[0].Outputs[?OutputKey==`CloudFrontCertArn`].OutputValue' \
-  --output text)
+  CLOUDFRONT_CERT_ARN=$(aws cloudformation describe-stacks \
+    --stack-name ChultCloudFrontCertStack \
+    --region us-east-1 \
+    --query 'Stacks[0].Outputs[?OutputKey==`CloudFrontCertArn`].OutputValue' \
+    --output text)
 
-if [[ -z "$CLOUDFRONT_CERT_ARN" || "$CLOUDFRONT_CERT_ARN" == "None" ]]; then
-  echo "ERROR: CloudFront certificate ARN not found after deploy."
-  exit 1
+  if [[ -z "$CLOUDFRONT_CERT_ARN" || "$CLOUDFRONT_CERT_ARN" == "None" ]]; then
+    echo "ERROR: CloudFront certificate ARN not found after deploy."
+    exit 1
+  fi
+else
+  echo "Skipping ChultCloudFrontCertStack deploy (custom domain disabled)."
 fi
 
 export IMAGE_TAG REPO_NAME AWS_REGION
 "$INFRA_DIR/scripts/push-ecr-image.sh"
 ensure_service_bucket
 
+service_deploy_args=(
+  --parameters ImageTag="$IMAGE_TAG"
+  --parameters ServiceBucketName="$SERVICE_BUCKET_NAME"
+)
+
+if [[ $USE_CUSTOM_DOMAIN -eq 1 ]]; then
+  echo "Deploying ChultServiceStack with custom-domain parameters..."
+  service_deploy_args+=(
+    --parameters HostedZoneId="$HOSTED_ZONE_ID"
+    --parameters HostedZoneName="$HOSTED_ZONE_NAME"
+    --parameters Subdomain="$SUBDOMAIN"
+    --parameters CloudFrontCertArn="$CLOUDFRONT_CERT_ARN"
+  )
+else
+  echo "Deploying ChultServiceStack without custom-domain parameters..."
+fi
+
 pnpm --dir "$INFRA_DIR" cdk deploy ChultServiceStack --require-approval never \
-  --parameters HostedZoneId="$HOSTED_ZONE_ID" \
-  --parameters ImageTag="$IMAGE_TAG" \
-  --parameters ServiceBucketName="$SERVICE_BUCKET_NAME" \
-  --parameters CloudFrontCertArn="$CLOUDFRONT_CERT_ARN"
+  "${service_deploy_args[@]}"
 
 DISTRIBUTION_ID=$(aws cloudformation describe-stacks \
   --stack-name ChultServiceStack \
@@ -200,7 +257,9 @@ rm -f "$TMP_POLICY" "$TMP_POLICY.new"
 
 echo "Updated bucket policy to allow CloudFront distribution $DISTRIBUTION_ID."
 
-aws s3 sync "$ROOT_DIR/client/public" "s3://$SERVICE_BUCKET_NAME" --delete
+aws s3 sync "$ROOT_DIR/client/public" "s3://$SERVICE_BUCKET_NAME" \
+  --delete \
+  --exclude "shown-hexes.txt"
 
 echo "Synced client assets to s3://$SERVICE_BUCKET_NAME"
 
