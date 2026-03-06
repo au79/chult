@@ -1,5 +1,13 @@
 coverage/
+dist/
 node_modules/
 /.pnpm-*/
 /server/data/shown-hexes.txt
 
+
+cdk.out/
+cdk.context.json
+/.idea/json_assistant_history.xml
+
+.env
+.env.*

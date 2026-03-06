@@ -1,7 +1,7 @@
 const HEX_TILE_SELECTOR = ".st0";
 const RESET_BUTTON_ID = "reset";
 const HEX_API_ENDPOINT = "/api/hexes";
-const WS_ENDPOINT = "/ws";
+const POLL_INTERVAL_MS = 2000;
 
 /**
  * Initializes click/reset handlers for hex tiles and wires them to the service.
@@ -17,6 +17,7 @@ export function initHexVisibilityControls(options = {}) {
 
   const revealedHexIds = new Set();
   let isFetching = false;
+  let isPolling = false;
   const hexLookup = new Map();
 
   hexTiles.forEach((hexElement, index) => {
@@ -41,7 +42,7 @@ export function initHexVisibilityControls(options = {}) {
   }
 
   void fetchInitialState();
-  connectWebSocket();
+  startPolling();
 
   /**
    * Handles a DM click by sending a signed instruction to the service.
@@ -93,30 +94,29 @@ export function initHexVisibilityControls(options = {}) {
   }
 
   /**
-   * Establishes the WebSocket connection and resubscribes on disconnect.
+   * Polls the REST endpoint for the latest state.
    */
-  function connectWebSocket(attempt = 0) {
-    const protocol = window.location.protocol === "https:" ? "wss" : "ws";
-    const ws = new WebSocket(`${protocol}://${window.location.host}${WS_ENDPOINT}`);
+  function startPolling() {
+    setInterval(() => {
+      void pollState();
+    }, POLL_INTERVAL_MS);
+  }
 
-    ws.addEventListener("message", (event) => {
-      try {
-        const payload = JSON.parse(event.data);
-        applyServerState(payload?.hexes || []);
-      } catch (parseError) {
-        console.error("Invalid WebSocket payload", parseError);
+  async function pollState() {
+    if (isPolling) return;
+    isPolling = true;
+    try {
+      const response = await fetch(HEX_API_ENDPOINT);
+      if (!response.ok) {
+        throw new Error(`Unexpected status ${response.status}`);
       }
-    });
-
-    ws.addEventListener("close", () => {
-      const nextAttempt = Math.min(attempt + 1, 5);
-      const delay = Math.min(1000 * 2 ** attempt, 10000);
-      setTimeout(() => connectWebSocket(nextAttempt), delay);
-    });
-
-    ws.addEventListener("error", () => {
-      ws.close();
-    });
+      const payload = await response.json();
+      applyServerState(payload?.hexes || []);
+    } catch (error) {
+      console.error("Failed to poll revealed hexes", error);
+    } finally {
+      isPolling = false;
+    }
   }
 
   /**

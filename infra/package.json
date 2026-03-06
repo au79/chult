@@ -1,0 +1,26 @@
+{
+  "name": "chult-infra",
+  "version": "0.1.0",
+  "private": true,
+  "description": "AWS CDK app for chult.oolong.com",
+  "scripts": {
+    "build": "tsc",
+    "watch": "tsc -w",
+    "cdk": "cdk",
+    "synth": "cdk synth",
+    "deploy": "cdk deploy",
+    "destroy": "cdk destroy",
+    "infra:up": "./scripts/infra-up.sh",
+    "infra:down": "./scripts/infra-down.sh"
+  },
+  "devDependencies": {
+    "@types/node": "22.19.11",
+    "aws-cdk": "2.1105.0",
+    "ts-node": "10.9.2",
+    "typescript": "5.9.3"
+  },
+  "dependencies": {
+    "aws-cdk-lib": "2.238.0",
+    "constructs": "10.4.2"
+  }
+}

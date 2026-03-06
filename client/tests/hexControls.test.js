@@ -1,36 +1,6 @@
 import { describe, it, beforeEach, afterEach, expect, vi } from "vitest";
 import { initHexVisibilityControls } from "../public/js/hexControls.js";
 
-class MockWebSocket {
-  static instances = [];
-
-  constructor() {
-    this.listeners = new Map();
-    MockWebSocket.instances.push(this);
-  }
-
-  addEventListener(type, handler) {
-    if (!this.listeners.has(type)) {
-      this.listeners.set(type, new Set());
-    }
-    this.listeners.get(type).add(handler);
-  }
-
-  dispatch(type, event) {
-    const handlers = this.listeners.get(type);
-    if (!handlers) return;
-    handlers.forEach((handler) => handler(event));
-  }
-
-  close() {
-    this.dispatch("close", new Event("close"));
-  }
-
-  static reset() {
-    MockWebSocket.instances = [];
-  }
-}
-
 function buildDom(hexCount = 3) {
   const hexes = Array.from({ length: hexCount }, () => '<div class="st0"></div>').join("");
   document.body.innerHTML = `
@@ -58,15 +28,12 @@ function mockFetch(initialHexes = []) {
 describe("initHexVisibilityControls", () => {
   beforeEach(() => {
     buildDom();
-    MockWebSocket.reset();
-    global.WebSocket = MockWebSocket;
-    window.WebSocket = MockWebSocket;
+    vi.useFakeTimers();
   });
 
   afterEach(() => {
-    delete global.WebSocket;
-    delete window.WebSocket;
     delete global.fetch;
+    vi.useRealTimers();
   });
 
   it("disables player interactions and hides reset button", async () => {
@@ -104,16 +71,23 @@ describe("initHexVisibilityControls", () => {
     expect(JSON.parse(postOptions.body)).toEqual({ value: -1 });
   });
 
-  it("applies WebSocket updates to the DOM", async () => {
-    global.fetch = mockFetch();
+  it("applies polling updates to the DOM", async () => {
+    const responses = [
+      { hexes: [] },
+      { hexes: [1] },
+    ];
+    global.fetch = vi.fn(() =>
+      Promise.resolve({
+        ok: true,
+        json: async () => responses.shift() ?? { hexes: [] },
+      }),
+    );
 
     initHexVisibilityControls({ role: "player" });
     await Promise.resolve();
 
-    const socket = MockWebSocket.instances[0];
-    socket.dispatch("message", {
-      data: JSON.stringify({ hexes: [1] }),
-    });
+    await vi.advanceTimersByTimeAsync(2000);
+    await Promise.resolve();
 
     const hexTiles = document.querySelectorAll(".st0");
     expect(hexTiles[1].classList.contains("off")).toBe(true);

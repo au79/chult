@@ -1,8 +1,6 @@
 import { EventEmitter } from 'node:events';
-import { constants } from 'node:fs';
-import { access, mkdir, readFile, rename, writeFile } from 'node:fs/promises';
-import { dirname } from 'node:path';
 import type { HexId, HexInstruction, RevealedHexes } from '#shared/hexes';
+import type { HexStorageAdapter } from './hexStorage.js';
 
 const NEWLINE = '\n';
 
@@ -16,19 +14,19 @@ const NEWLINE = '\n';
 export class HexStore extends EventEmitter {
   #hexes: HexId[] = [];
   #operationQueue: Promise<void> = Promise.resolve();
-  readonly #filePath: string;
+  readonly #storage: HexStorageAdapter;
 
-  constructor(filePath: string) {
+  constructor(storage: HexStorageAdapter) {
     super();
-    this.#filePath = filePath;
+    this.#storage = storage;
   }
 
   /**
    * Ensures the backing file exists and warms the in-memory cache.
    */
   async init() {
-    await ensureFile(this.#filePath);
-    this.#hexes = await this.#readFromDisk();
+    await this.#storage.init();
+    this.#hexes = await this.#readFromStorage();
   }
 
   /**
@@ -80,17 +78,15 @@ export class HexStore extends EventEmitter {
    * Persists the provided list while ensuring sequential writes.
    */
   async #writeToDisk(next: HexId[]) {
-    const tmpPath = `${this.#filePath}.tmp`;
     const serialized = next.join(NEWLINE) + (next.length ? NEWLINE : '');
-    await writeFile(tmpPath, serialized, 'utf8');
-    await rename(tmpPath, this.#filePath);
+    await this.#storage.write(serialized);
     this.#hexes = next;
     this.emit('change', { hexes: this.getAll() } satisfies RevealedHexes);
   }
 
-  async #readFromDisk(): Promise<HexId[]> {
+  async #readFromStorage(): Promise<HexId[]> {
     try {
-      const contents = await readFile(this.#filePath, 'utf8');
+      const contents = await this.#storage.read();
       return normalizeHexIds(
         contents
           .split(/\r?\n/)
@@ -105,18 +101,6 @@ export class HexStore extends EventEmitter {
       }
       throw error;
     }
-  }
-}
-
-/**
- * Ensures the data file exists.
- */
-async function ensureFile(filePath: string) {
-  await mkdir(dirname(filePath), { recursive: true });
-  try {
-    await access(filePath, constants.F_OK);
-  } catch {
-    await writeFile(filePath, '', 'utf8');
   }
 }
 
