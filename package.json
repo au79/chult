@@ -1,11 +1,11 @@
 {
   "name": "chult-map-monorepo",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "private": true,
   "type": "module",
   "packageManager": "pnpm@9.5.0",
   "engines": {
-    "node": ">=18.20.4"
+    "node": ">=22.21.0"
   },
   "scripts": {
     "dev": "pnpm server:dev",
@@ -29,7 +29,9 @@
     "client:test:watch": "pnpm --filter chult-map-client test:watch",
     "ecr:push": "bash infra/scripts/push-ecr-image.sh",
     "infra:up": "pnpm --dir infra infra:up",
-    "infra:down": "pnpm --dir infra infra:down"
+    "infra:down": "pnpm --dir infra infra:down",
+    "infra:dynamodb:export": "pnpm --dir infra dynamodb:export ./tmp/chult-map-hexes-export-$(date -u +%Y%m%dT%H%M%SZ).json",
+    "infra:dynamodb:import": "pnpm --dir infra dynamodb:import ./tmp/chult.map-hexes-export-20260307T075832Z.json"
   },
   "devDependencies": {
     "typescript": "5.9.3",

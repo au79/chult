@@ -9,12 +9,11 @@ export class ChultCloudFrontCertStack extends cdk.Stack {
 
     const hostedZoneId = new cdk.CfnParameter(this, 'HostedZoneId', {
       type: 'String',
-      description: 'Route 53 hosted zone ID for oolong.com',
+      description: 'Route 53 hosted zone ID for your domain (for example, example.com).',
     });
 
     const hostedZoneName = new cdk.CfnParameter(this, 'HostedZoneName', {
       type: 'String',
-      default: 'oolong.com',
       description: 'Route 53 hosted zone name (no trailing dot).',
     });
 

@@ -1,0 +1,24 @@
+{
+  "tableName": "chult-map-hexes",
+  "region": "us-west-2",
+  "exportedAt": "2026-03-07T07:48:32Z",
+  "itemCount": 2,
+  "items": [
+    {
+      "mapId": {
+        "S": "default"
+      },
+      "hexId": {
+        "N": "185"
+      }
+    },
+    {
+      "mapId": {
+        "S": "default"
+      },
+      "hexId": {
+        "N": "218"
+      }
+    }
+  ]
+}

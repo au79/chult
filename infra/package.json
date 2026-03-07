@@ -11,7 +11,9 @@
     "deploy": "cdk deploy",
     "destroy": "cdk destroy",
     "infra:up": "./scripts/infra-up.sh",
-    "infra:down": "./scripts/infra-down.sh"
+    "infra:down": "./scripts/infra-down.sh",
+    "dynamodb:export": "./scripts/dynamodb-export.sh",
+    "dynamodb:import": "./scripts/dynamodb-import.sh"
   },
   "devDependencies": {
     "@types/node": "22.19.11",

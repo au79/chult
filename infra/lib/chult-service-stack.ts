@@ -137,7 +137,6 @@ export class ChultServiceStack extends cdk.Stack {
       role: lambdaRole,
       environment: {
         DATA_PATH: '/tmp/chult/shown-hexes.txt',
-        SERVICE_BUCKET_NAME: resolvedServiceBucketName,
         HEX_ID_STORAGE: 'dynamodb',
         HEX_DDB_TABLE_NAME: hexesTable.tableName,
         HEX_DDB_MAP_ID: hexesMapId.valueAsString,

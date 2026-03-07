@@ -72,25 +72,21 @@ The AWS CDK app lives in `infra/`. The production deployment uses:
 
 - Lambda Function URL → Hono AWS adapter (API)
 - S3 + CloudFront for client assets
-- Route 53 record for `chult.oolong.com` → CloudFront
+- Route 53 record for `chult.example.com` → CloudFront
 - ACM certificate (CloudFront in us-east-1)
 - ECR repo `chult-map-service` (timestamp tags)
+
+Custom domain is optional in `infra:up`. If `HOSTED_ZONE_ID`, `HOSTED_ZONE_NAME`, and `SUBDOMAIN` are all set, it deploys cert/DNS aliasing; otherwise it serves from the default CloudFront domain.
 
 Useful commands:
 
 ```bash
 pnpm --dir infra infra:up
 pnpm --dir infra infra:down
-pnpm --dir infra cdk deploy ChultServiceStack \
-  --parameters HostedZoneId=Z1234567890 \
-  --parameters HostedZoneName=oolong.com \
-  --parameters Subdomain=chult \
-  --parameters ImageTag=20260209173000 \
-  --parameters ServiceBucketName=oolong-chult-map-service \
-  --parameters CloudFrontCertArn=arn:aws:acm:us-east-1:123456789012:certificate/abc...
 ```
 
-Hex ID storage defaults to S3 when running in Lambda and local `DATA_PATH` otherwise. Override with `HEX_ID_STORAGE=local|s3` and `SERVICE_BUCKET_NAME`.
+Hex ID storage defaults to DynamoDB when running in Lambda and local `DATA_PATH` otherwise.
+Override with `HEX_ID_STORAGE=local|dynamodb`.
 
 ## Project Structure
 

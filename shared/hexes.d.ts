@@ -28,5 +28,5 @@ declare module '#shared/hexes' {
 
   export type RevealedHexes<T extends number = number> = { hexes: HexId<T>[] };
 
-  export type StorageType = 'local' | 's3' | 'dynamodb';
+  export type StorageType = 'local' | 'dynamodb';
 }

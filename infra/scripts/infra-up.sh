@@ -51,6 +51,31 @@ if ! command -v pnpm >/dev/null 2>&1; then
   exit 1
 fi
 
+is_valid_s3_bucket_name() {
+  local bucket="$1"
+
+  if [[ -z "$bucket" ]]; then
+    return 1
+  fi
+  if [[ ${#bucket} -lt 3 || ${#bucket} -gt 63 ]]; then
+    return 1
+  fi
+  if [[ ! "$bucket" =~ ^[a-z0-9][a-z0-9.-]*[a-z0-9]$ ]]; then
+    return 1
+  fi
+  if [[ "$bucket" == *".."* ]]; then
+    return 1
+  fi
+  if [[ "$bucket" == *".-"* || "$bucket" == *"-."* ]]; then
+    return 1
+  fi
+  if [[ "$bucket" =~ ^[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+    return 1
+  fi
+
+  return 0
+}
+
 echo "Infra config:"
 echo "  ENV_FILE=${ENV_FILE:-$INFRA_DIR/.env}"
 echo "  AWS_REGION=$AWS_REGION"
@@ -69,6 +94,21 @@ echo "  SERVICE_BUCKET_NAME=$SERVICE_BUCKET_NAME"
 echo "  HEXES_TABLE_NAME=$HEXES_TABLE_NAME"
 echo "  REPO_NAME=$REPO_NAME"
 echo "  IMAGE_TAG=$IMAGE_TAG"
+
+if is_valid_s3_bucket_name "$SERVICE_BUCKET_NAME"; then
+  EFFECTIVE_SERVICE_BUCKET_NAME="$SERVICE_BUCKET_NAME"
+  echo "Using configured SERVICE_BUCKET_NAME: $EFFECTIVE_SERVICE_BUCKET_NAME"
+else
+  if [[ -n "$SERVICE_BUCKET_NAME" ]]; then
+    echo "WARNING: SERVICE_BUCKET_NAME is invalid. Falling back to default service bucket name."
+  else
+    echo "SERVICE_BUCKET_NAME not supplied. Using default service bucket name."
+  fi
+
+  ACCOUNT_ID_FOR_BUCKET=$(aws sts get-caller-identity --query Account --output text)
+  EFFECTIVE_SERVICE_BUCKET_NAME="chult-map-service-${ACCOUNT_ID_FOR_BUCKET}-${AWS_REGION}"
+  echo "Default service bucket name: $EFFECTIVE_SERVICE_BUCKET_NAME"
+fi
 
 ensure_lambda_role() {
   TRUST_POLICY_PATH="$INFRA_DIR/iam/lambda-trust-policy.json"
@@ -101,20 +141,10 @@ ensure_lambda_role() {
     exit 1
   fi
 
-  s3_policy=$(cat <<EOF
+  lambda_policy=$(cat <<EOF
 {
   "Version": "2012-10-17",
   "Statement": [
-    {
-      "Effect": "Allow",
-      "Action": ["s3:ListBucket"],
-      "Resource": "arn:aws:s3:::${SERVICE_BUCKET_NAME}"
-    },
-    {
-      "Effect": "Allow",
-      "Action": ["s3:GetObject", "s3:PutObject"],
-      "Resource": "arn:aws:s3:::${SERVICE_BUCKET_NAME}/*"
-    },
     {
       "Effect": "Allow",
       "Action": [
@@ -133,9 +163,14 @@ EOF
 
   aws iam put-role-policy \
     --role-name "$ROLE_NAME" \
-    --policy-name "ChultHexIdS3Access" \
-    --policy-document "$s3_policy" \
+    --policy-name "ChultHexIdDynamoDbAccess" \
+    --policy-document "$lambda_policy" \
     >/dev/null
+
+  aws iam delete-role-policy \
+    --role-name "$ROLE_NAME" \
+    --policy-name "ChultHexIdS3Access" \
+    >/dev/null 2>&1 || true
 
   aws iam attach-role-policy \
     --role-name "$ROLE_NAME" \
@@ -151,31 +186,31 @@ EOF
 }
 
 ensure_service_bucket() {
-  if aws s3api head-bucket --bucket "$SERVICE_BUCKET_NAME" >/dev/null 2>&1; then
-    echo "Bucket $SERVICE_BUCKET_NAME already exists."
+  if aws s3api head-bucket --bucket "$EFFECTIVE_SERVICE_BUCKET_NAME" >/dev/null 2>&1; then
+    echo "Bucket $EFFECTIVE_SERVICE_BUCKET_NAME already exists."
     return 0
   fi
 
-  echo "Creating bucket $SERVICE_BUCKET_NAME in $AWS_REGION..."
+  echo "Creating bucket $EFFECTIVE_SERVICE_BUCKET_NAME in $AWS_REGION..."
 
   if [[ "$AWS_REGION" == "us-east-1" ]]; then
-    aws s3api create-bucket --bucket "$SERVICE_BUCKET_NAME"
+    aws s3api create-bucket --bucket "$EFFECTIVE_SERVICE_BUCKET_NAME"
   else
     aws s3api create-bucket \
-      --bucket "$SERVICE_BUCKET_NAME" \
+      --bucket "$EFFECTIVE_SERVICE_BUCKET_NAME" \
       --region "$AWS_REGION" \
       --create-bucket-configuration LocationConstraint="$AWS_REGION"
   fi
 
   aws s3api put-bucket-encryption \
-    --bucket "$SERVICE_BUCKET_NAME" \
+    --bucket "$EFFECTIVE_SERVICE_BUCKET_NAME" \
     --server-side-encryption-configuration '{"Rules":[{"ApplyServerSideEncryptionByDefault":{"SSEAlgorithm":"AES256"}}]}'
 
   aws s3api put-public-access-block \
-    --bucket "$SERVICE_BUCKET_NAME" \
+    --bucket "$EFFECTIVE_SERVICE_BUCKET_NAME" \
     --public-access-block-configuration 'BlockPublicAcls=true,IgnorePublicAcls=true,BlockPublicPolicy=true,RestrictPublicBuckets=true'
 
-  echo "Bucket $SERVICE_BUCKET_NAME created and locked down."
+  echo "Bucket $EFFECTIVE_SERVICE_BUCKET_NAME created and locked down."
 }
 
 ensure_hexes_table() {
@@ -234,7 +269,7 @@ ensure_hexes_table
 
 service_deploy_args=(
   --parameters ImageTag="$IMAGE_TAG"
-  --parameters ServiceBucketName="$SERVICE_BUCKET_NAME"
+  --parameters ServiceBucketName="$EFFECTIVE_SERVICE_BUCKET_NAME"
   --parameters HexesTableName="$HEXES_TABLE_NAME"
 )
 
@@ -266,12 +301,12 @@ fi
 
 ACCOUNT_ID=$(aws sts get-caller-identity --query Account --output text)
 DIST_ARN="arn:aws:cloudfront::${ACCOUNT_ID}:distribution/${DISTRIBUTION_ID}"
-OBJECT_ARN="arn:aws:s3:::${SERVICE_BUCKET_NAME}/*"
 
+OBJECT_ARN="arn:aws:s3:::${EFFECTIVE_SERVICE_BUCKET_NAME}/*"
 TMP_POLICY=$(mktemp)
 
-if aws s3api get-bucket-policy --bucket "$SERVICE_BUCKET_NAME" >/dev/null 2>&1; then
-  aws s3api get-bucket-policy --bucket "$SERVICE_BUCKET_NAME" --query Policy --output text > "$TMP_POLICY"
+if aws s3api get-bucket-policy --bucket "$EFFECTIVE_SERVICE_BUCKET_NAME" >/dev/null 2>&1; then
+  aws s3api get-bucket-policy --bucket "$EFFECTIVE_SERVICE_BUCKET_NAME" --query Policy --output text > "$TMP_POLICY"
 else
   echo '{"Version":"2012-10-17","Statement":[]}' > "$TMP_POLICY"
 fi
@@ -290,17 +325,14 @@ jq --arg distArn "$DIST_ARN" --arg objectArn "$OBJECT_ARN" '
     ]
 ' "$TMP_POLICY" > "$TMP_POLICY.new"
 
-aws s3api put-bucket-policy --bucket "$SERVICE_BUCKET_NAME" --policy file://"$TMP_POLICY.new"
+aws s3api put-bucket-policy --bucket "$EFFECTIVE_SERVICE_BUCKET_NAME" --policy file://"$TMP_POLICY.new"
 
 rm -f "$TMP_POLICY" "$TMP_POLICY.new"
 
 echo "Updated bucket policy to allow CloudFront distribution $DISTRIBUTION_ID."
 
-aws s3 sync "$ROOT_DIR/client/public" "s3://$SERVICE_BUCKET_NAME" \
-  --delete \
-  --exclude "shown-hexes.txt"
-
-echo "Synced client assets to s3://$SERVICE_BUCKET_NAME"
+aws s3 sync "$ROOT_DIR/client/public" "s3://$EFFECTIVE_SERVICE_BUCKET_NAME" --delete
+echo "Synced client assets to s3://$EFFECTIVE_SERVICE_BUCKET_NAME"
 
 aws cloudfront create-invalidation \
   --distribution-id "$DISTRIBUTION_ID" \
