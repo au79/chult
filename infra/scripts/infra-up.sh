@@ -51,31 +51,6 @@ if ! command -v pnpm >/dev/null 2>&1; then
   exit 1
 fi
 
-is_valid_s3_bucket_name() {
-  local bucket="$1"
-
-  if [[ -z "$bucket" ]]; then
-    return 1
-  fi
-  if [[ ${#bucket} -lt 3 || ${#bucket} -gt 63 ]]; then
-    return 1
-  fi
-  if [[ ! "$bucket" =~ ^[a-z0-9][a-z0-9.-]*[a-z0-9]$ ]]; then
-    return 1
-  fi
-  if [[ "$bucket" == *".."* ]]; then
-    return 1
-  fi
-  if [[ "$bucket" == *".-"* || "$bucket" == *"-."* ]]; then
-    return 1
-  fi
-  if [[ "$bucket" =~ ^[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
-    return 1
-  fi
-
-  return 0
-}
-
 echo "Infra config:"
 echo "  ENV_FILE=${ENV_FILE:-$INFRA_DIR/.env}"
 echo "  AWS_REGION=$AWS_REGION"
@@ -95,8 +70,9 @@ echo "  HEXES_TABLE_NAME=$HEXES_TABLE_NAME"
 echo "  REPO_NAME=$REPO_NAME"
 echo "  IMAGE_TAG=$IMAGE_TAG"
 
-if is_valid_s3_bucket_name "$SERVICE_BUCKET_NAME"; then
-  EFFECTIVE_SERVICE_BUCKET_NAME="$SERVICE_BUCKET_NAME"
+resolve_effective_service_bucket_name
+
+if [[ "$SERVICE_BUCKET_NAME_SOURCE" == "configured" ]]; then
   echo "Using configured SERVICE_BUCKET_NAME: $EFFECTIVE_SERVICE_BUCKET_NAME"
 else
   if [[ -n "$SERVICE_BUCKET_NAME" ]]; then
@@ -104,9 +80,6 @@ else
   else
     echo "SERVICE_BUCKET_NAME not supplied. Using default service bucket name."
   fi
-
-  ACCOUNT_ID_FOR_BUCKET=$(aws sts get-caller-identity --query Account --output text)
-  EFFECTIVE_SERVICE_BUCKET_NAME="chult-map-service-${ACCOUNT_ID_FOR_BUCKET}-${AWS_REGION}"
   echo "Default service bucket name: $EFFECTIVE_SERVICE_BUCKET_NAME"
 fi
 
@@ -209,6 +182,10 @@ ensure_service_bucket() {
   aws s3api put-public-access-block \
     --bucket "$EFFECTIVE_SERVICE_BUCKET_NAME" \
     --public-access-block-configuration 'BlockPublicAcls=true,IgnorePublicAcls=true,BlockPublicPolicy=true,RestrictPublicBuckets=true'
+
+  aws s3api put-bucket-tagging \
+    --bucket "$EFFECTIVE_SERVICE_BUCKET_NAME" \
+    --tagging 'TagSet=[{Key=ManagedBy,Value=chult-infra-up},{Key=Project,Value=chult},{Key=ManagedResource,Value=service-bucket}]'
 
   echo "Bucket $EFFECTIVE_SERVICE_BUCKET_NAME created and locked down."
 }
