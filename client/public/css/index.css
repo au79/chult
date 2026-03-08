@@ -6,7 +6,8 @@
 
 html {
     font-family: 'Open Sans', sans-serif;
-    box-sizing: border-box
+    box-sizing: border-box;
+    --hex-opacity: 1
 }
 
 body {
@@ -51,12 +52,181 @@ body {
     color: red
 }
 
+.dm-menu-shell {
+    position: fixed;
+    bottom: 18px;
+    left: 18px;
+    z-index: 4;
+    width: 50px;
+    height: 50px;
+    border-radius: 8px;
+    background-color: rgba(0, 0, 0, 0.9);
+    overflow: hidden;
+    transition: width 0.2s ease-in-out, height 0.2s ease-in-out
+}
+
+.dm-menu-shell.open {
+    width: min(280px, calc(100vw - 36px));
+    height: 176px
+}
+
+.button.menu-toggle {
+    position: absolute;
+    left: 0;
+    bottom: 0;
+    border: 0;
+    border-radius: 8px;
+    width: 50px;
+    min-width: 50px;
+    height: 50px;
+    min-height: 50px;
+    padding: 0
+}
+
+.menu-toggle-icon {
+    position: relative;
+    width: 26px;
+    height: 26px;
+    display: inline-block
+}
+
+.menu-toggle-line {
+    position: absolute;
+    left: 1px;
+    width: 24px;
+    height: 3px;
+    border-radius: 3px;
+    background-color: #fff;
+    transform-origin: center;
+    transition: transform 0.2s ease-in-out, opacity 0.15s ease-in-out
+}
+
+.menu-toggle-line:nth-child(1) {
+    top: 3px
+}
+
+.menu-toggle-line:nth-child(2) {
+    top: 11px
+}
+
+.menu-toggle-line:nth-child(3) {
+    top: 19px
+}
+
+.button.menu-toggle.open .menu-toggle-line:nth-child(1) {
+    top: 11px;
+    transform: rotate(45deg)
+}
+
+.button.menu-toggle.open .menu-toggle-line:nth-child(2) {
+    opacity: 0
+}
+
+.button.menu-toggle.open .menu-toggle-line:nth-child(3) {
+    top: 11px;
+    transform: rotate(-45deg)
+}
+
+.dm-menu {
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: 50px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    opacity: 0;
+    pointer-events: none;
+    visibility: hidden;
+    padding: 12px;
+    transition: opacity 0.15s ease-in-out, visibility 0.15s ease-in-out
+}
+
+.dm-menu-shell.open .dm-menu {
+    opacity: 1;
+    pointer-events: auto;
+    visibility: visible
+}
+
+.dm-menu .menu-item {
+    min-width: 220px
+}
+
+.dm-menu .button.menu-item {
+    border: 1px solid #51565a;
+    background-color: #323639;
+    min-height: 42px;
+    padding: 0 12px;
+    font-size: 16px
+}
+
+.dm-menu .button.menu-item:hover {
+    color: red
+}
+
+.opacity-control {
+    color: #f2f2f2;
+    font-size: 14px;
+    line-height: 1.4
+}
+
+.opacity-control input[type="range"] {
+    width: 100%;
+    margin-top: 6px
+}
+
+.modal-overlay {
+    display: none;
+    position: fixed;
+    inset: 0;
+    z-index: 6;
+    background-color: rgba(0, 0, 0, 0.55);
+    align-items: center;
+    justify-content: center;
+    padding: 20px
+}
+
+.modal-overlay.open {
+    display: flex
+}
+
+.modal-content {
+    width: min(360px, 100%);
+    border-radius: 10px;
+    background: #22272a;
+    color: #f2f2f2;
+    padding: 16px
+}
+
+.modal-content p {
+    font-size: 16px;
+    margin-bottom: 14px
+}
+
+.modal-actions {
+    display: flex;
+    gap: 10px;
+    justify-content: flex-end
+}
+
+.modal-button {
+    min-height: 40px;
+    min-width: 120px;
+    padding: 0 12px;
+    font-size: 14px;
+    border: 1px solid #51565a
+}
+
+.modal-button.danger:hover {
+    color: #ff5b5b
+}
+
 .map .st0 {
-    fill: #fcf5d9;
+    fill: #000;
     stroke: #1d1d1b;
     stroke-width: 0.5;
     stroke-miterlimit: 10;
-    opacity: 1;
+    opacity: var(--hex-opacity);
     transition: all 0.25s ease-in-out;
     cursor: pointer
 }

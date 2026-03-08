@@ -8,7 +8,31 @@
 </head>
 <body data-role="dm">
 <div class="container">
-    <button id="reset" class="button reset"> &#x21bb;</button>
+    <div id="dm-menu-shell" class="dm-menu-shell">
+        <div id="dm-menu" class="dm-menu" role="menu" aria-label="Dungeon master controls">
+            <button id="reset" class="button menu-item reset-action" role="menuitem">Reset map hexes</button>
+            <label class="menu-item opacity-control" for="hex-opacity">
+                <span>Hex opacity <span id="hex-opacity-value">65%</span></span>
+                <input id="hex-opacity" type="range" min="10" max="100" value="65"/>
+            </label>
+        </div>
+        <button id="menu-toggle" class="button menu-toggle" aria-label="Open DM controls" aria-expanded="false">
+            <span class="menu-toggle-icon" aria-hidden="true">
+                <span class="menu-toggle-line"></span>
+                <span class="menu-toggle-line"></span>
+                <span class="menu-toggle-line"></span>
+            </span>
+        </button>
+    </div>
+    <div id="reset-confirm-modal" class="modal-overlay" aria-hidden="true">
+        <div class="modal-content" role="dialog" aria-modal="true" aria-label="Confirm reset">
+            <p>Reset all currently revealed hexes?</p>
+            <div class="modal-actions">
+                <button id="reset-confirm" class="button modal-button danger">Reset map hexes</button>
+                <button id="reset-cancel" class="button modal-button">Cancel</button>
+            </div>
+        </div>
+    </div>
     <div data-pinch-zoom class="pinch-zoom-root">
         <svg class="map" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink"
              viewBox="0 0 4476 6000">
