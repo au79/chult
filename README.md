@@ -43,6 +43,7 @@ The app listens on `9876`. Mount `/var/task/server/data` to persist local file s
 ## Deploying to AWS
 
 Infrastructure for deploying to AWS lives in [`infra/`](infra/README.md).
+See the infra README prerequisites section for required CLIs (`aws`, `docker`/`buildx`, `jq`) and AWS permissions.
 
 ```bash
 # Deploy infra stack and sync static assets

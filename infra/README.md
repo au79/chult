@@ -2,6 +2,22 @@
 
 CDK app and shell scripts for deploying the service stack.
 
+## Requirements
+
+Install these before running infra scripts:
+
+- Node.js `>=22.21.0`
+- pnpm `>=9.5.0`
+- `aws` CLI v2 (used by all infra scripts)
+- `docker` with `buildx` enabled (required for image build/push)
+- `jq` (required by `infra:up`, `dynamodb:export`, and `dynamodb:import`)
+
+AWS setup requirements:
+
+- Valid AWS credentials/profile in your shell environment
+- Permission to use ECR, IAM, Lambda, CloudFormation, S3, DynamoDB, CloudFront, and (for custom domains) Route53 + ACM
+- CDK bootstrapped in target account/region (`pnpm --dir infra cdk bootstrap`)
+
 ## What Gets Deployed
 
 - ECR-backed Lambda (container image)
