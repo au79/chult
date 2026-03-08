@@ -110,11 +110,15 @@ describe("initHexVisibilityControls", () => {
     });
 
     initHexVisibilityControls({ role: "dm" });
-    await flushMicrotasks();
+    const initialLoad = flushMicrotasks();
+    await vi.advanceTimersByTimeAsync(0);
+    await initialLoad;
 
     const resetButton = document.getElementById("reset");
     resetButton.dispatchEvent(new Event("click", { bubbles: true }));
-    await flushMicrotasks();
+    const resetFlush = flushMicrotasks();
+    await vi.advanceTimersByTimeAsync(0);
+    await resetFlush;
 
     expect(postCalls).toEqual([0, 1]);
   });
