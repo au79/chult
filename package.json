@@ -27,6 +27,8 @@
     "client:test": "pnpm --filter chult-map-client test",
     "client:test:coverage": "pnpm --filter chult-map-client test:coverage",
     "client:test:watch": "pnpm --filter chult-map-client test:watch",
+    "docker:build": "DOCKER_API_VERSION=1.43 docker build -t chult-map-server .",
+    "docker:run": "docker run --rm -d --name chult-map-server-local -p 9876:9876 -v \"$(pwd)/server/data:/var/task/server/data\" --entrypoint node chult-map-server server/dist/server.js",
     "infra:ecr:push": "pnpm --dir infra ecr:push",
     "infra:up": "pnpm --dir infra infra:up",
     "infra:down": "pnpm --dir infra infra:down",
