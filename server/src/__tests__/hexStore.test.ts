@@ -4,7 +4,7 @@ import { mkdtemp, readFile, rm } from 'node:fs/promises';
 import { describe, expect, beforeEach, afterEach, it, vi } from 'vitest';
 import { HexStore } from '../hexStore.js';
 import { LocalHexStorage } from '../hexStorage.js';
-import type { HexInstruction } from '#shared/hexes';
+import type { HexInstruction } from '../types/hexes.js';
 
 describe('HexStore', () => {
   let tempDir: string;

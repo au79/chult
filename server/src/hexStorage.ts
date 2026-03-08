@@ -12,7 +12,7 @@ import {
   type DynamoDBClientConfig,
   type WriteRequest,
 } from '@aws-sdk/client-dynamodb';
-import type { HexId, HexInstruction } from '#shared/hexes';
+import type { HexId, HexInstruction } from './types/hexes.js';
 import { normalizeHexIds } from './hexIds.js';
 
 export interface HexStorageAdapter {

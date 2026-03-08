@@ -9,11 +9,7 @@
     "esModuleInterop": true,
     "forceConsistentCasingInFileNames": true,
     "rootDir": "src",
-    "outDir": "dist",
-    "baseUrl": ".",
-    "paths": {
-      "#shared/*": ["../shared/*"]
-    }
+    "outDir": "dist"
   },
-  "include": ["src", "../shared/**/*.d.ts"]
+  "include": ["src"]
 }

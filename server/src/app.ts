@@ -5,7 +5,7 @@ import { fileURLToPath } from 'node:url';
 import { HexStore } from './hexStore.js';
 import { DynamoDbHexStorage, LocalHexStorage } from './hexStorage.js';
 import { registerHexRoutes } from './routes/hexes.js';
-import { StorageType } from '#shared/hexes';
+import type { StorageType } from './types/hexes.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);

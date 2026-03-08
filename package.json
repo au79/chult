@@ -22,7 +22,7 @@
     "server:test": "pnpm --filter chult-map-service test",
     "server:test:coverage": "pnpm --filter chult-map-service test:coverage",
     "server:test:watch": "pnpm --filter chult-map-service test:watch",
-    "format:root": "prettier --write \"./*.{js,ts,tsx,jsx,json,md}\" ./shared --ignore-path .prettierignore",
+    "format:root": "prettier --write \"./*.{js,ts,tsx,jsx,json,md}\" --ignore-path .prettierignore",
     "client:format": "pnpm --filter chult-map-client format",
     "client:test": "pnpm --filter chult-map-client test",
     "client:test:coverage": "pnpm --filter chult-map-client test:coverage",

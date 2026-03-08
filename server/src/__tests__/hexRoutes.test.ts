@@ -1,6 +1,6 @@
 import { describe, it, expect, vi } from 'vitest';
 import { Hono } from 'hono';
-import type { HexInstruction } from '#shared/hexes';
+import type { HexInstruction } from '../types/hexes.js';
 import { registerHexRoutes } from '../routes/hexes.js';
 
 class FakeStore {

@@ -1,4 +1,4 @@
-import { HexInstruction, HexInstructionPayload } from '#shared/hexes';
+import type { HexInstruction, HexInstructionPayload } from '../types/hexes.js';
 import type { Hono } from 'hono';
 import { HexStore } from '../hexStore.js';
 

@@ -1,4 +1,4 @@
-import type { HexId } from '#shared/hexes';
+import type { HexId } from './types/hexes.js';
 
 /**
  * Returns a deduped, sorted list of positive integers.
