@@ -13,6 +13,7 @@
     "destroy": "cdk destroy",
     "infra:up": "./scripts/infra-up.sh",
     "infra:down": "./scripts/infra-down.sh",
+    "ecr:push": "./scripts/push-ecr-image.sh",
     "dynamodb:export": "./scripts/dynamodb-export.sh",
     "dynamodb:import": "./scripts/dynamodb-import.sh"
   },
