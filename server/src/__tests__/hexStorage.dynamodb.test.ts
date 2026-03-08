@@ -33,7 +33,9 @@ describe('DynamoDbHexStorage', () => {
   });
 
   it('throws a clear init error when access check fails', async () => {
-    const send = vi.fn().mockRejectedValue(new Error('ResourceNotFoundException'));
+    const send = vi
+      .fn()
+      .mockRejectedValue(new Error('ResourceNotFoundException'));
     const storage = new DynamoDbHexStorage(
       'hex-table',
       'campaign-a',
@@ -210,9 +212,10 @@ describe('DynamoDbHexStorage', () => {
       undefined,
       { send },
     );
-    const serialized = Array.from({ length: 26 }, (_, index) => `${index + 1}`).join(
-      '\n',
-    );
+    const serialized = Array.from(
+      { length: 26 },
+      (_, index) => `${index + 1}`,
+    ).join('\n');
 
     await storage.write(`${serialized}\n`);
 
@@ -220,11 +223,11 @@ describe('DynamoDbHexStorage', () => {
       (call) => call[0] instanceof BatchWriteItemCommand,
     );
     expect(batchCalls).toHaveLength(2);
-    expect(
-      batchCalls[0]?.[0]?.input?.RequestItems?.['hex-table']?.length,
-    ).toBe(25);
-    expect(
-      batchCalls[1]?.[0]?.input?.RequestItems?.['hex-table']?.length,
-    ).toBe(1);
+    expect(batchCalls[0]?.[0]?.input?.RequestItems?.['hex-table']?.length).toBe(
+      25,
+    );
+    expect(batchCalls[1]?.[0]?.input?.RequestItems?.['hex-table']?.length).toBe(
+      1,
+    );
   });
 });

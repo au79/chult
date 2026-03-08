@@ -44,10 +44,7 @@ class PinchZoomElement extends HTMLElement {
      * Validates whether a new pointer should be tracked in the session.
      */
     const handleSessionStart = (_, nativeEvent) => {
-      if (
-        pointerSession.currentPointers.length === 2 ||
-        !this._positioningEl
-      ) {
+      if (pointerSession.currentPointers.length === 2 || !this._positioningEl) {
         return false;
       }
       nativeEvent.preventDefault();
@@ -58,10 +55,7 @@ class PinchZoomElement extends HTMLElement {
      * Applies pointer movement deltas coming from the session manager.
      */
     const handleSessionMove = (previousPointers) => {
-      this._handlePointerMove(
-        previousPointers,
-        pointerSession.currentPointers,
-      );
+      this._handlePointerMove(previousPointers, pointerSession.currentPointers);
     };
 
     pointerSession = new PointerSession(this, {
@@ -99,9 +93,8 @@ class PinchZoomElement extends HTMLElement {
       allowChangeEvent = false,
     } = options;
 
-    const referenceElement = relativeTo === "content"
-      ? this._positioningEl
-      : this;
+    const referenceElement =
+      relativeTo === "content" ? this._positioningEl : this;
 
     if (referenceElement && this._positioningEl) {
       const referenceRect = referenceElement.getBoundingClientRect();
@@ -156,9 +149,8 @@ class PinchZoomElement extends HTMLElement {
           .multiply(this._transform.inverse());
 
         const transformedTopLeft = topLeft.matrixTransform(adjustmentMatrix);
-        const transformedBottomRight = bottomRight.matrixTransform(
-          adjustmentMatrix,
-        );
+        const transformedBottomRight =
+          bottomRight.matrixTransform(adjustmentMatrix);
 
         if (transformedTopLeft.x > hostRect.width) {
           x += hostRect.width - transformedTopLeft.x;
@@ -188,8 +180,8 @@ class PinchZoomElement extends HTMLElement {
       return;
     }
 
-    const hasChanged = nextScale !== this.scale || nextX !== this.x ||
-      nextY !== this.y;
+    const hasChanged =
+      nextScale !== this.scale || nextX !== this.x || nextY !== this.y;
 
     if (!hasChanged) {
       return;

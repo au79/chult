@@ -1,6 +1,9 @@
 import { EventEmitter } from 'node:events';
 import type { HexId, HexInstruction, RevealedHexes } from '#shared/hexes';
-import type { AtomicHexStorageAdapter, HexStorageAdapter } from './hexStorage.js';
+import type {
+  AtomicHexStorageAdapter,
+  HexStorageAdapter,
+} from './hexStorage.js';
 import { normalizeHexIds } from './hexIds.js';
 
 const NEWLINE = '\n';

@@ -86,8 +86,8 @@ class PointerSession {
     this.handlePointerEnd = this.handlePointerEnd.bind(this);
     this.handleTouchEnd = this.handleTouchEnd.bind(this);
 
-    const supportsTouch = "ontouchstart" in window ||
-      navigator.msMaxTouchPoints;
+    const supportsTouch =
+      "ontouchstart" in window || navigator.msMaxTouchPoints;
 
     if (window.PointerEvent && supportsTouch) {
       this.element.addEventListener("pointerdown", this.handlePointerStart);
@@ -131,11 +131,12 @@ class PointerSession {
 
   handleMove(event) {
     const previousPointers = this.currentPointers.slice();
-    const changedPointers = "changedTouches" in event
-      ? Array.from(event.changedTouches).map(
-        (touch) => new TrackedPointer(touch),
-      )
-      : [new TrackedPointer(event)];
+    const changedPointers =
+      "changedTouches" in event
+        ? Array.from(event.changedTouches).map(
+            (touch) => new TrackedPointer(touch),
+          )
+        : [new TrackedPointer(event)];
 
     const updatedPointers = [];
 
@@ -190,9 +191,4 @@ class PointerSession {
   }
 }
 
-export {
-  PointerSession,
-  calculateDistance,
-  calculateMidpoint,
-  resolveLength,
-};
+export { PointerSession, calculateDistance, calculateMidpoint, resolveLength };

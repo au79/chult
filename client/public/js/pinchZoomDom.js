@@ -96,7 +96,4 @@ function getSharedSvg() {
   return sharedSvgElement;
 }
 
-export {
-  PINCH_ZOOM_TAG,
-  PINCH_ZOOM_PLACEHOLDER_SELECTOR,
-};
+export { PINCH_ZOOM_TAG, PINCH_ZOOM_PLACEHOLDER_SELECTOR };

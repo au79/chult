@@ -139,7 +139,10 @@ export function initHexVisibilityControls(options = {}) {
       const isOpen = menuShell.classList.toggle("open");
       menuToggleButton.setAttribute("aria-expanded", String(isOpen));
       menuToggleButton.classList.toggle("open", isOpen);
-      menuToggleButton.setAttribute("aria-label", isOpen ? "Close DM controls" : "Open DM controls");
+      menuToggleButton.setAttribute(
+        "aria-label",
+        isOpen ? "Close DM controls" : "Open DM controls",
+      );
     });
 
     document.addEventListener("click", (event) => {
@@ -157,7 +160,9 @@ export function initHexVisibilityControls(options = {}) {
     if (!hexOpacitySlider) return;
     const storedValue = getStoredHexOpacityPercent();
     const startingValue =
-      storedValue || Number(hexOpacitySlider.value) || DEFAULT_DM_HEX_OPACITY_PERCENT;
+      storedValue ||
+      Number(hexOpacitySlider.value) ||
+      DEFAULT_DM_HEX_OPACITY_PERCENT;
     hexOpacitySlider.value = String(startingValue);
     setHexOpacity(startingValue);
 
@@ -171,10 +176,16 @@ export function initHexVisibilityControls(options = {}) {
   function setHexOpacity(percentValue) {
     const clampedPercent = Math.min(
       MAX_HEX_OPACITY_PERCENT,
-      Math.max(MIN_HEX_OPACITY_PERCENT, Number(percentValue) || MAX_HEX_OPACITY_PERCENT),
+      Math.max(
+        MIN_HEX_OPACITY_PERCENT,
+        Number(percentValue) || MAX_HEX_OPACITY_PERCENT,
+      ),
     );
     const normalizedOpacity = (clampedPercent / 100).toFixed(2);
-    document.documentElement.style.setProperty("--hex-opacity", normalizedOpacity);
+    document.documentElement.style.setProperty(
+      "--hex-opacity",
+      normalizedOpacity,
+    );
     if (hexOpacityValue) {
       hexOpacityValue.textContent = `${clampedPercent}%`;
     }
@@ -186,7 +197,10 @@ export function initHexVisibilityControls(options = {}) {
       if (!rawValue) return null;
       const parsedValue = Number(rawValue);
       if (Number.isNaN(parsedValue)) return null;
-      return Math.min(MAX_HEX_OPACITY_PERCENT, Math.max(MIN_HEX_OPACITY_PERCENT, parsedValue));
+      return Math.min(
+        MAX_HEX_OPACITY_PERCENT,
+        Math.max(MIN_HEX_OPACITY_PERCENT, parsedValue),
+      );
     } catch (error) {
       return null;
     }
@@ -196,9 +210,15 @@ export function initHexVisibilityControls(options = {}) {
     try {
       const safeValue = Math.min(
         MAX_HEX_OPACITY_PERCENT,
-        Math.max(MIN_HEX_OPACITY_PERCENT, Number(percentValue) || MAX_HEX_OPACITY_PERCENT),
+        Math.max(
+          MIN_HEX_OPACITY_PERCENT,
+          Number(percentValue) || MAX_HEX_OPACITY_PERCENT,
+        ),
       );
-      window.localStorage.setItem(DM_HEX_OPACITY_STORAGE_KEY, String(safeValue));
+      window.localStorage.setItem(
+        DM_HEX_OPACITY_STORAGE_KEY,
+        String(safeValue),
+      );
     } catch (error) {
       // Ignore storage errors (e.g. privacy mode) and keep the UI responsive.
     }

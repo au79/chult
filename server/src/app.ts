@@ -14,10 +14,9 @@ const STORAGE_TYPES = ['local', 'dynamodb'] as const;
 const dataFile =
   process.env.DATA_PATH ?? resolve(__dirname, '../data/shown-hexes.txt');
 
-const defaultStorage: StorageType =
-  process.env.AWS_LAMBDA_FUNCTION_NAME ?
-    'dynamodb' :
-    parseStorageType(process.env.HEX_ID_STORAGE || 'local');
+const defaultStorage: StorageType = process.env.AWS_LAMBDA_FUNCTION_NAME
+  ? 'dynamodb'
+  : parseStorageType(process.env.HEX_ID_STORAGE || 'local');
 
 const hexesTableName = process.env.HEX_DDB_TABLE_NAME ?? 'chult-map-hexes';
 const hexesMapId = process.env.HEX_DDB_MAP_ID ?? 'default';
@@ -32,12 +31,7 @@ export async function createApp() {
   );
   const hexStore = new HexStore(storage);
 
-  logHexStorage(
-    defaultStorage,
-    dataFile,
-    hexesTableName,
-    hexesMapId,
-  );
+  logHexStorage(defaultStorage, dataFile, hexesTableName, hexesMapId);
 
   await hexStore.init();
 

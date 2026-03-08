@@ -2,7 +2,10 @@ import { describe, it, beforeEach, afterEach, expect, vi } from "vitest";
 import { initHexVisibilityControls } from "../public/js/hexControls.js";
 
 function buildDom(hexCount = 3) {
-  const hexes = Array.from({ length: hexCount }, () => '<div class="st0"></div>').join("");
+  const hexes = Array.from(
+    { length: hexCount },
+    () => '<div class="st0"></div>',
+  ).join("");
   document.body.innerHTML = `
     <div class="container">
       <button id="reset" class="button reset"></button>
@@ -11,7 +14,10 @@ function buildDom(hexCount = 3) {
 }
 
 function buildDmMenuDom(hexCount = 3) {
-  const hexes = Array.from({ length: hexCount }, () => '<div class="st0"></div>').join("");
+  const hexes = Array.from(
+    { length: hexCount },
+    () => '<div class="st0"></div>',
+  ).join("");
   document.body.innerHTML = `
     <div class="container">
       <div id="dm-menu-shell" class="dm-menu-shell">
@@ -104,10 +110,7 @@ describe("initHexVisibilityControls", () => {
   });
 
   it("applies polling updates to the DOM", async () => {
-    const responses = [
-      { hexes: [] },
-      { hexes: [1] },
-    ];
+    const responses = [{ hexes: [] }, { hexes: [1] }];
     global.fetch = vi.fn(() =>
       Promise.resolve({
         ok: true,
@@ -190,7 +193,9 @@ describe("initHexVisibilityControls", () => {
     slider.value = "35";
     slider.dispatchEvent(new Event("input", { bubbles: true }));
 
-    expect(document.documentElement.style.getPropertyValue("--hex-opacity")).toBe("0.35");
+    expect(
+      document.documentElement.style.getPropertyValue("--hex-opacity"),
+    ).toBe("0.35");
     expect(valueLabel.textContent).toBe("35%");
     expect(window.localStorage.getItem("dmHexOpacityPercent")).toBe("35");
   });
@@ -207,7 +212,9 @@ describe("initHexVisibilityControls", () => {
     const valueLabel = document.getElementById("hex-opacity-value");
 
     expect(slider.value).toBe("42");
-    expect(document.documentElement.style.getPropertyValue("--hex-opacity")).toBe("0.42");
+    expect(
+      document.documentElement.style.getPropertyValue("--hex-opacity"),
+    ).toBe("0.42");
     expect(valueLabel.textContent).toBe("42%");
   });
 
@@ -222,7 +229,9 @@ describe("initHexVisibilityControls", () => {
     const valueLabel = document.getElementById("hex-opacity-value");
 
     expect(slider.value).toBe("65");
-    expect(document.documentElement.style.getPropertyValue("--hex-opacity")).toBe("0.65");
+    expect(
+      document.documentElement.style.getPropertyValue("--hex-opacity"),
+    ).toBe("0.65");
     expect(valueLabel.textContent).toBe("65%");
   });
 
@@ -233,7 +242,9 @@ describe("initHexVisibilityControls", () => {
     initHexVisibilityControls({ role: "player" });
     await Promise.resolve();
 
-    expect(document.documentElement.style.getPropertyValue("--hex-opacity")).toBe("1");
+    expect(
+      document.documentElement.style.getPropertyValue("--hex-opacity"),
+    ).toBe("1");
   });
 
   function flushMicrotasks() {
