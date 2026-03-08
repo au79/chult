@@ -74,6 +74,7 @@ export async function createApp() {
       root: publicDir,
       rewriteRequestPath: (path) => {
         if (path === '/') return '/player.html';
+        if (path === '/dm') return '/dm.html';
         return path;
       },
     }),
