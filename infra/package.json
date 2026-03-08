@@ -5,6 +5,7 @@
   "description": "AWS CDK app for chult.oolong.com",
   "scripts": {
     "build": "tsc",
+    "format": "prettier --write \"**/*.{js,ts,tsx,jsx,json,css,md,yml,yaml}\" --ignore-path ../.prettierignore",
     "test": "bash ./tests/infra-down.test.sh && bash ./tests/infra-up.test.sh",
     "watch": "tsc -w",
     "cdk": "cdk",

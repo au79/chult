@@ -8,6 +8,7 @@ node_modules/
 cdk.out/
 cdk.context.json
 /.idea/json_assistant_history.xml
+/.idea/prettier.xml
 
 .env
 .env.*
