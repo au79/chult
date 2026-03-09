@@ -9,6 +9,7 @@ import * as s3 from 'aws-cdk-lib/aws-s3';
 import * as cloudfront from 'aws-cdk-lib/aws-cloudfront';
 import * as cloudfrontOrigins from 'aws-cdk-lib/aws-cloudfront-origins';
 import * as dynamodb from 'aws-cdk-lib/aws-dynamodb';
+import * as path from 'node:path';
 
 export class ChultServiceStack extends cdk.Stack {
   constructor(scope: Construct, id: string, props?: cdk.StackProps) {
@@ -159,6 +160,15 @@ export class ChultServiceStack extends cdk.Stack {
       cloudfrontOrigins.S3BucketOrigin.withOriginAccessControl(serviceBucket);
 
     const apiOrigin = new cloudfrontOrigins.FunctionUrlOrigin(functionUrl);
+    const htmlRewriteFunction = new cloudfront.Function(
+      this,
+      'HtmlRewriteFunction',
+      {
+        code: cloudfront.FunctionCode.fromFile({
+          filePath: path.join(__dirname, '../cloudfront/html-rewrite.js'),
+        }),
+      },
+    );
 
     const apiOriginRequestPolicy = new cloudfront.OriginRequestPolicy(
       this,
@@ -182,6 +192,12 @@ export class ChultServiceStack extends cdk.Stack {
         compress: true,
         cachePolicy: cloudfront.CachePolicy.CACHING_OPTIMIZED,
         viewerProtocolPolicy: cloudfront.ViewerProtocolPolicy.REDIRECT_TO_HTTPS,
+        functionAssociations: [
+          {
+            eventType: cloudfront.FunctionEventType.VIEWER_REQUEST,
+            function: htmlRewriteFunction,
+          },
+        ],
       },
       additionalBehaviors: {
         'api/*': {
