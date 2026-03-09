@@ -1,9 +1,5 @@
 import { EventEmitter } from 'node:events';
-import type {
-  HexId,
-  HexInstruction,
-  RevealedHexes,
-} from './types/hexes.js';
+import type { HexId, HexInstruction, RevealedHexes } from './types/hexes.js';
 import type {
   AtomicHexStorageAdapter,
   HexStorageAdapter,
