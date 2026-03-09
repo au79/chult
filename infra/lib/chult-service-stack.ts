@@ -9,6 +9,7 @@ import * as s3 from 'aws-cdk-lib/aws-s3';
 import * as cloudfront from 'aws-cdk-lib/aws-cloudfront';
 import * as cloudfrontOrigins from 'aws-cdk-lib/aws-cloudfront-origins';
 import * as dynamodb from 'aws-cdk-lib/aws-dynamodb';
+import * as path from 'node:path';
 
 export class ChultServiceStack extends cdk.Stack {
   constructor(scope: Construct, id: string, props?: cdk.StackProps) {
@@ -29,7 +30,8 @@ export class ChultServiceStack extends cdk.Stack {
     const subdomain = new cdk.CfnParameter(this, 'Subdomain', {
       type: 'String',
       default: '',
-      description: 'Subdomain label to use for the service (no zone suffix, optional).',
+      description:
+        'Subdomain label to use for the service (no zone suffix, optional).',
     });
 
     const imageTag = new cdk.CfnParameter(this, 'ImageTag', {
@@ -47,7 +49,8 @@ export class ChultServiceStack extends cdk.Stack {
     const cloudFrontCertArn = new cdk.CfnParameter(this, 'CloudFrontCertArn', {
       type: 'String',
       default: '',
-      description: 'ACM certificate ARN in us-east-1 for CloudFront (optional).',
+      description:
+        'ACM certificate ARN in us-east-1 for CloudFront (optional).',
     });
 
     const ecrRepositoryName = new cdk.CfnParameter(this, 'EcrRepositoryName', {
@@ -59,7 +62,8 @@ export class ChultServiceStack extends cdk.Stack {
     const lambdaRoleName = new cdk.CfnParameter(this, 'LambdaRoleName', {
       type: 'String',
       default: 'ChultLambdaExecutionRole',
-      description: 'Pre-created Lambda execution role name to use for the service.',
+      description:
+        'Pre-created Lambda execution role name to use for the service.',
     });
 
     const hexesTableName = new cdk.CfnParameter(this, 'HexesTableNameParam', {
@@ -82,10 +86,7 @@ export class ChultServiceStack extends cdk.Stack {
       this,
       'UseDefaultServiceBucketName',
       {
-        expression: cdk.Fn.conditionEquals(
-          serviceBucketName.valueAsString,
-          '',
-        ),
+        expression: cdk.Fn.conditionEquals(serviceBucketName.valueAsString, ''),
       },
     );
     const resolvedServiceBucketName = cdk.Fn.conditionIf(
@@ -120,10 +121,18 @@ export class ChultServiceStack extends cdk.Stack {
 
     const useCustomDomain = new cdk.CfnCondition(this, 'UseCustomDomain', {
       expression: cdk.Fn.conditionAnd(
-        cdk.Fn.conditionNot(cdk.Fn.conditionEquals(hostedZoneId.valueAsString, '')),
-        cdk.Fn.conditionNot(cdk.Fn.conditionEquals(hostedZoneName.valueAsString, '')),
-        cdk.Fn.conditionNot(cdk.Fn.conditionEquals(subdomain.valueAsString, '')),
-        cdk.Fn.conditionNot(cdk.Fn.conditionEquals(cloudFrontCertArn.valueAsString, '')),
+        cdk.Fn.conditionNot(
+          cdk.Fn.conditionEquals(hostedZoneId.valueAsString, ''),
+        ),
+        cdk.Fn.conditionNot(
+          cdk.Fn.conditionEquals(hostedZoneName.valueAsString, ''),
+        ),
+        cdk.Fn.conditionNot(
+          cdk.Fn.conditionEquals(subdomain.valueAsString, ''),
+        ),
+        cdk.Fn.conditionNot(
+          cdk.Fn.conditionEquals(cloudFrontCertArn.valueAsString, ''),
+        ),
       ),
     });
 
@@ -147,11 +156,19 @@ export class ChultServiceStack extends cdk.Stack {
       authType: lambda.FunctionUrlAuthType.NONE,
     });
 
-    const s3Origin = cloudfrontOrigins.S3BucketOrigin.withOriginAccessControl(
-      serviceBucket,
-    );
+    const s3Origin =
+      cloudfrontOrigins.S3BucketOrigin.withOriginAccessControl(serviceBucket);
 
     const apiOrigin = new cloudfrontOrigins.FunctionUrlOrigin(functionUrl);
+    const htmlRewriteFunction = new cloudfront.Function(
+      this,
+      'HtmlRewriteFunction',
+      {
+        code: cloudfront.FunctionCode.fromFile({
+          filePath: path.join(__dirname, '../cloudfront/html-rewrite.js'),
+        }),
+      },
+    );
 
     const apiOriginRequestPolicy = new cloudfront.OriginRequestPolicy(
       this,
@@ -169,12 +186,18 @@ export class ChultServiceStack extends cdk.Stack {
     );
 
     distribution = new cloudfront.Distribution(this, 'ChultDistribution', {
-      defaultRootObject: 'player.html',
+      defaultRootObject: 'index.html',
       defaultBehavior: {
         origin: s3Origin,
         compress: true,
         cachePolicy: cloudfront.CachePolicy.CACHING_OPTIMIZED,
         viewerProtocolPolicy: cloudfront.ViewerProtocolPolicy.REDIRECT_TO_HTTPS,
+        functionAssociations: [
+          {
+            eventType: cloudfront.FunctionEventType.VIEWER_REQUEST,
+            function: htmlRewriteFunction,
+          },
+        ],
       },
       additionalBehaviors: {
         'api/*': {
@@ -182,22 +205,29 @@ export class ChultServiceStack extends cdk.Stack {
           allowedMethods: cloudfront.AllowedMethods.ALLOW_ALL,
           cachePolicy: cloudfront.CachePolicy.CACHING_DISABLED,
           originRequestPolicy: apiOriginRequestPolicy,
-          viewerProtocolPolicy: cloudfront.ViewerProtocolPolicy.REDIRECT_TO_HTTPS,
+          viewerProtocolPolicy:
+            cloudfront.ViewerProtocolPolicy.REDIRECT_TO_HTTPS,
         },
         health: {
           origin: apiOrigin,
           allowedMethods: cloudfront.AllowedMethods.ALLOW_ALL,
           cachePolicy: cloudfront.CachePolicy.CACHING_DISABLED,
           originRequestPolicy: apiOriginRequestPolicy,
-          viewerProtocolPolicy: cloudfront.ViewerProtocolPolicy.REDIRECT_TO_HTTPS,
+          viewerProtocolPolicy:
+            cloudfront.ViewerProtocolPolicy.REDIRECT_TO_HTTPS,
         },
       },
     });
 
-    const cfnDistribution = distribution.node.defaultChild as cloudfront.CfnDistribution;
+    const cfnDistribution = distribution.node
+      .defaultChild as cloudfront.CfnDistribution;
     cfnDistribution.addPropertyOverride(
       'DistributionConfig.Aliases',
-      cdk.Fn.conditionIf(useCustomDomain.logicalId, [fullDomainName], cdk.Aws.NO_VALUE),
+      cdk.Fn.conditionIf(
+        useCustomDomain.logicalId,
+        [fullDomainName],
+        cdk.Aws.NO_VALUE,
+      ),
     );
     cfnDistribution.addPropertyOverride(
       'DistributionConfig.ViewerCertificate',
@@ -212,10 +242,14 @@ export class ChultServiceStack extends cdk.Stack {
       ),
     );
 
-    const zone = route53.HostedZone.fromHostedZoneAttributes(this, 'HostedZone', {
-      hostedZoneId: hostedZoneId.valueAsString,
-      zoneName: hostedZoneName.valueAsString,
-    });
+    const zone = route53.HostedZone.fromHostedZoneAttributes(
+      this,
+      'HostedZone',
+      {
+        hostedZoneId: hostedZoneId.valueAsString,
+        zoneName: hostedZoneName.valueAsString,
+      },
+    );
     const aliasRecord = new route53.ARecord(this, 'CloudFrontAliasRecord', {
       zone,
       recordName: subdomain.valueAsString,
@@ -223,8 +257,9 @@ export class ChultServiceStack extends cdk.Stack {
         new route53Targets.CloudFrontTarget(distribution),
       ),
     });
-    (aliasRecord.node.defaultChild as route53.CfnRecordSet).cfnOptions.condition =
-      useCustomDomain;
+    (
+      aliasRecord.node.defaultChild as route53.CfnRecordSet
+    ).cfnOptions.condition = useCustomDomain;
 
     new cdk.CfnOutput(this, 'EcrRepositoryUri', {
       value: repo.repositoryUri,

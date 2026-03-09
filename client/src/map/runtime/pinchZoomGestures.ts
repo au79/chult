@@ -1,3 +1,4 @@
+// @ts-nocheck
 function calculateDistance(pointerA, pointerB) {
   if (!pointerB) return 0;
   return Math.sqrt(
@@ -17,10 +18,10 @@ function calculateMidpoint(pointerA, pointerB) {
 }
 
 function resolveLength(input, referenceLength) {
-  if (typeof input === "number") {
+  if (typeof input === 'number') {
     return input;
   }
-  if (input.trimEnd().endsWith("%")) {
+  if (input.trimEnd().endsWith('%')) {
     return (referenceLength * parseFloat(input)) / 100;
   }
   return parseFloat(input);
@@ -55,7 +56,7 @@ class TrackedPointer {
   }
 
   getCoalescedPointers() {
-    if ("getCoalescedEvents" in this.nativePointer) {
+    if ('getCoalescedEvents' in this.nativePointer) {
       return this.nativePointer
         .getCoalescedEvents()
         .map((event) => new TrackedPointer(event));
@@ -87,15 +88,15 @@ class PointerSession {
     this.handleTouchEnd = this.handleTouchEnd.bind(this);
 
     const supportsTouch =
-      "ontouchstart" in window || navigator.msMaxTouchPoints;
+      'ontouchstart' in window || navigator.msMaxTouchPoints;
 
     if (window.PointerEvent && supportsTouch) {
-      this.element.addEventListener("pointerdown", this.handlePointerStart);
+      this.element.addEventListener('pointerdown', this.handlePointerStart);
     } else {
-      this.element.addEventListener("mousedown", this.handlePointerStart);
-      this.element.addEventListener("touchstart", this.handleTouchStart);
-      this.element.addEventListener("touchmove", this.handleMove);
-      this.element.addEventListener("touchend", this.handleTouchEnd);
+      this.element.addEventListener('mousedown', this.handlePointerStart);
+      this.element.addEventListener('touchstart', this.handleTouchStart);
+      this.element.addEventListener('touchmove', this.handleMove);
+      this.element.addEventListener('touchend', this.handleTouchEnd);
     }
   }
 
@@ -114,11 +115,11 @@ class PointerSession {
     if (this.triggerPointerStart(new TrackedPointer(event), event)) {
       if (isPointerEvent(event)) {
         this.element.setPointerCapture(event.pointerId);
-        this.element.addEventListener("pointermove", this.handleMove);
-        this.element.addEventListener("pointerup", this.handlePointerEnd);
+        this.element.addEventListener('pointermove', this.handleMove);
+        this.element.addEventListener('pointerup', this.handlePointerEnd);
       } else {
-        window.addEventListener("mousemove", this.handleMove);
-        window.addEventListener("mouseup", this.handlePointerEnd);
+        window.addEventListener('mousemove', this.handleMove);
+        window.addEventListener('mouseup', this.handlePointerEnd);
       }
     }
   }
@@ -132,7 +133,7 @@ class PointerSession {
   handleMove(event) {
     const previousPointers = this.currentPointers.slice();
     const changedPointers =
-      "changedTouches" in event
+      'changedTouches' in event
         ? Array.from(event.changedTouches).map(
             (touch) => new TrackedPointer(touch),
           )
@@ -175,11 +176,11 @@ class PointerSession {
         if (this.currentPointers.length) {
           return;
         }
-        this.element.removeEventListener("pointermove", this.handleMove);
-        this.element.removeEventListener("pointerup", this.handlePointerEnd);
+        this.element.removeEventListener('pointermove', this.handleMove);
+        this.element.removeEventListener('pointerup', this.handlePointerEnd);
       } else {
-        window.removeEventListener("mousemove", this.handleMove);
-        window.removeEventListener("mouseup", this.handlePointerEnd);
+        window.removeEventListener('mousemove', this.handleMove);
+        window.removeEventListener('mouseup', this.handlePointerEnd);
       }
     }
   }

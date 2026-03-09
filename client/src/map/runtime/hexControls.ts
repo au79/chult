@@ -1,26 +1,27 @@
-const HEX_TILE_SELECTOR = ".st0";
-const RESET_BUTTON_ID = "reset";
-const MENU_TOGGLE_BUTTON_ID = "menu-toggle";
-const MENU_PANEL_ID = "dm-menu";
-const MENU_SHELL_ID = "dm-menu-shell";
-const HEX_OPACITY_SLIDER_ID = "hex-opacity";
-const HEX_OPACITY_VALUE_ID = "hex-opacity-value";
-const RESET_CONFIRM_MODAL_ID = "reset-confirm-modal";
-const RESET_CONFIRM_BUTTON_ID = "reset-confirm";
-const RESET_CANCEL_BUTTON_ID = "reset-cancel";
-const HEX_API_ENDPOINT = "/api/hexes";
+// @ts-nocheck
+const HEX_TILE_SELECTOR = '.st0';
+const RESET_BUTTON_ID = 'reset';
+const MENU_TOGGLE_BUTTON_ID = 'menu-toggle';
+const MENU_PANEL_ID = 'dm-menu';
+const MENU_SHELL_ID = 'dm-menu-shell';
+const HEX_OPACITY_SLIDER_ID = 'hex-opacity';
+const HEX_OPACITY_VALUE_ID = 'hex-opacity-value';
+const RESET_CONFIRM_MODAL_ID = 'reset-confirm-modal';
+const RESET_CONFIRM_BUTTON_ID = 'reset-confirm';
+const RESET_CANCEL_BUTTON_ID = 'reset-cancel';
+const HEX_API_ENDPOINT = '/api/hexes';
 const POLL_INTERVAL_MS = 2000;
 const MIN_HEX_OPACITY_PERCENT = 10;
 const MAX_HEX_OPACITY_PERCENT = 100;
 const DEFAULT_DM_HEX_OPACITY_PERCENT = 65;
-const DM_HEX_OPACITY_STORAGE_KEY = "dmHexOpacityPercent";
+const DM_HEX_OPACITY_STORAGE_KEY = 'dmHexOpacityPercent';
 
 /**
  * Initializes click/reset handlers for hex tiles and wires them to the service.
  */
 export function initHexVisibilityControls(options = {}) {
-  const { role = "player" } = options;
-  const isDungeonMaster = role === "dm";
+  const { role = 'player' } = options;
+  const isDungeonMaster = role === 'dm';
 
   registerPassiveTouchListeners(document);
 
@@ -43,21 +44,21 @@ export function initHexVisibilityControls(options = {}) {
   hexTiles.forEach((hexElement, index) => {
     const id = String(index);
     hexElement.dataset.hexId = id;
-    hexElement.setAttribute("id", id);
+    hexElement.setAttribute('id', id);
     hexLookup.set(id, hexElement);
 
     if (isDungeonMaster) {
-      hexElement.addEventListener("click", handleHexToggle);
+      hexElement.addEventListener('click', handleHexToggle);
     } else {
-      hexElement.style.pointerEvents = "none";
+      hexElement.style.pointerEvents = 'none';
     }
   });
 
   if (resetButton) {
     if (isDungeonMaster) {
-      resetButton.addEventListener("click", requestResetConfirmation);
+      resetButton.addEventListener('click', requestResetConfirmation);
     } else {
-      resetButton.style.display = "none";
+      resetButton.style.display = 'none';
     }
   }
 
@@ -66,7 +67,7 @@ export function initHexVisibilityControls(options = {}) {
     initHexOpacityControl();
     initResetConfirmationModal();
   } else {
-    document.documentElement.style.setProperty("--hex-opacity", "1");
+    document.documentElement.style.setProperty('--hex-opacity', '1');
   }
 
   void fetchInitialState();
@@ -82,7 +83,7 @@ export function initHexVisibilityControls(options = {}) {
     const hexId = hexElement.dataset.hexId;
     if (!hexId) return;
 
-    const shouldCover = hexElement.classList.contains("off");
+    const shouldCover = hexElement.classList.contains('off');
     const instructionValue = shouldCover ? Number(hexId) : -Number(hexId);
     applyLocalToggle(hexId, !shouldCover);
     void sendHexInstruction(instructionValue);
@@ -98,7 +99,7 @@ export function initHexVisibilityControls(options = {}) {
       void handleReset();
       return;
     }
-    resetConfirmModal.classList.add("open");
+    resetConfirmModal.classList.add('open');
   }
 
   async function handleReset() {
@@ -116,18 +117,18 @@ export function initHexVisibilityControls(options = {}) {
   function initResetConfirmationModal() {
     if (!resetConfirmModal || !resetConfirmButton || !resetCancelButton) return;
 
-    resetConfirmButton.addEventListener("click", () => {
-      resetConfirmModal.classList.remove("open");
+    resetConfirmButton.addEventListener('click', () => {
+      resetConfirmModal.classList.remove('open');
       void handleReset();
     });
 
-    resetCancelButton.addEventListener("click", () => {
-      resetConfirmModal.classList.remove("open");
+    resetCancelButton.addEventListener('click', () => {
+      resetConfirmModal.classList.remove('open');
     });
 
-    resetConfirmModal.addEventListener("click", (event) => {
+    resetConfirmModal.addEventListener('click', (event) => {
       if (event.target === resetConfirmModal) {
-        resetConfirmModal.classList.remove("open");
+        resetConfirmModal.classList.remove('open');
       }
     });
   }
@@ -135,23 +136,23 @@ export function initHexVisibilityControls(options = {}) {
   function initDungeonMasterMenu() {
     if (!menuToggleButton || !menuPanel || !menuShell) return;
 
-    menuToggleButton.addEventListener("click", () => {
-      const isOpen = menuShell.classList.toggle("open");
-      menuToggleButton.setAttribute("aria-expanded", String(isOpen));
-      menuToggleButton.classList.toggle("open", isOpen);
+    menuToggleButton.addEventListener('click', () => {
+      const isOpen = menuShell.classList.toggle('open');
+      menuToggleButton.setAttribute('aria-expanded', String(isOpen));
+      menuToggleButton.classList.toggle('open', isOpen);
       menuToggleButton.setAttribute(
-        "aria-label",
-        isOpen ? "Close DM controls" : "Open DM controls",
+        'aria-label',
+        isOpen ? 'Close DM controls' : 'Open DM controls',
       );
     });
 
-    document.addEventListener("click", (event) => {
+    document.addEventListener('click', (event) => {
       const clickTarget = event.target;
       if (clickTarget instanceof Node && !menuShell.contains(clickTarget)) {
-        menuShell.classList.remove("open");
-        menuToggleButton.setAttribute("aria-expanded", "false");
-        menuToggleButton.classList.remove("open");
-        menuToggleButton.setAttribute("aria-label", "Open DM controls");
+        menuShell.classList.remove('open');
+        menuToggleButton.setAttribute('aria-expanded', 'false');
+        menuToggleButton.classList.remove('open');
+        menuToggleButton.setAttribute('aria-label', 'Open DM controls');
       }
     });
   }
@@ -166,7 +167,7 @@ export function initHexVisibilityControls(options = {}) {
     hexOpacitySlider.value = String(startingValue);
     setHexOpacity(startingValue);
 
-    hexOpacitySlider.addEventListener("input", (event) => {
+    hexOpacitySlider.addEventListener('input', (event) => {
       const nextValue = Number(event.target?.value);
       setHexOpacity(nextValue);
       persistHexOpacityPercent(nextValue);
@@ -183,7 +184,7 @@ export function initHexVisibilityControls(options = {}) {
     );
     const normalizedOpacity = (clampedPercent / 100).toFixed(2);
     document.documentElement.style.setProperty(
-      "--hex-opacity",
+      '--hex-opacity',
       normalizedOpacity,
     );
     if (hexOpacityValue) {
@@ -236,7 +237,7 @@ export function initHexVisibilityControls(options = {}) {
       const payload = await response.json();
       applyServerState(payload?.hexes || []);
     } catch (error) {
-      console.error("Failed to load revealed hexes", error);
+      console.error('Failed to load revealed hexes', error);
     }
   }
 
@@ -260,7 +261,7 @@ export function initHexVisibilityControls(options = {}) {
       const payload = await response.json();
       applyServerState(payload?.hexes || []);
     } catch (error) {
-      console.error("Failed to poll revealed hexes", error);
+      console.error('Failed to poll revealed hexes', error);
     } finally {
       isPolling = false;
     }
@@ -272,8 +273,8 @@ export function initHexVisibilityControls(options = {}) {
   async function sendHexInstruction(value) {
     try {
       const response = await fetch(HEX_API_ENDPOINT, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ value }),
       });
 
@@ -281,7 +282,7 @@ export function initHexVisibilityControls(options = {}) {
         throw new Error(`Unexpected status ${response.status}`);
       }
     } catch (error) {
-      console.error("Failed to update hex state", error);
+      console.error('Failed to update hex state', error);
     }
   }
 
@@ -296,9 +297,9 @@ export function initHexVisibilityControls(options = {}) {
 
     hexLookup.forEach((hexElement, hexId) => {
       if (revealedHexIds.has(hexId)) {
-        hexElement.classList.add("off");
+        hexElement.classList.add('off');
       } else {
-        hexElement.classList.remove("off");
+        hexElement.classList.remove('off');
       }
     });
   }
@@ -312,10 +313,10 @@ export function initHexVisibilityControls(options = {}) {
 
     if (shouldReveal) {
       revealedHexIds.add(String(hexId));
-      target.classList.add("off");
+      target.classList.add('off');
     } else {
       revealedHexIds.delete(String(hexId));
-      target.classList.remove("off");
+      target.classList.remove('off');
     }
   }
 }

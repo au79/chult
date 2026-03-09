@@ -9,7 +9,8 @@ export class ChultCloudFrontCertStack extends cdk.Stack {
 
     const hostedZoneId = new cdk.CfnParameter(this, 'HostedZoneId', {
       type: 'String',
-      description: 'Route 53 hosted zone ID for your domain (for example, example.com).',
+      description:
+        'Route 53 hosted zone ID for your domain (for example, example.com).',
     });
 
     const hostedZoneName = new cdk.CfnParameter(this, 'HostedZoneName', {
@@ -23,17 +24,25 @@ export class ChultCloudFrontCertStack extends cdk.Stack {
       description: 'Subdomain label to use for the service (no zone suffix).',
     });
 
-    const zone = route53.HostedZone.fromHostedZoneAttributes(this, 'HostedZone', {
-      hostedZoneId: hostedZoneId.valueAsString,
-      zoneName: hostedZoneName.valueAsString,
-    });
+    const zone = route53.HostedZone.fromHostedZoneAttributes(
+      this,
+      'HostedZone',
+      {
+        hostedZoneId: hostedZoneId.valueAsString,
+        zoneName: hostedZoneName.valueAsString,
+      },
+    );
 
     const fullDomainName = `${subdomain.valueAsString}.${hostedZoneName.valueAsString}`;
 
-    const certificate = new acm.Certificate(this, 'ChultCloudFrontCertificate', {
-      domainName: fullDomainName,
-      validation: acm.CertificateValidation.fromDns(zone),
-    });
+    const certificate = new acm.Certificate(
+      this,
+      'ChultCloudFrontCertificate',
+      {
+        domainName: fullDomainName,
+        validation: acm.CertificateValidation.fromDns(zone),
+      },
+    );
 
     new cdk.CfnOutput(this, 'CloudFrontCertArn', {
       value: certificate.certificateArn,

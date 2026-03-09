@@ -24,7 +24,7 @@ AWS setup requirements:
 - Lambda Function URL (origin for API routes)
 - S3 bucket for static assets
 - CloudFront distribution:
-  - default behavior -> S3 (`player.html`)
+  - default behavior -> S3 (`index.html`)
   - `api/*` and `health` -> Lambda Function URL
 - Route53 + ACM cert (only when custom domain env vars are set)
 - DynamoDB table for revealed hex state
@@ -57,7 +57,7 @@ pnpm ecr:push
 4. Ensures service S3 bucket exists (uses `SERVICE_BUCKET_NAME` or default `chult-map-service-<account>-<region>`).
 5. Ensures DynamoDB table exists (`HEXES_TABLE_NAME`).
 6. Deploys `ChultServiceStack`.
-7. Syncs `client/public` into S3 and invalidates CloudFront.
+7. Builds client assets, syncs `client/dist` into S3, and invalidates CloudFront.
 
 ## `infra:down` Behavior
 
