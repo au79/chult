@@ -176,7 +176,7 @@ export class ChultServiceStack extends cdk.Stack {
     );
 
     distribution = new cloudfront.Distribution(this, 'ChultDistribution', {
-      defaultRootObject: 'player.html',
+      defaultRootObject: 'index.html',
       defaultBehavior: {
         origin: s3Origin,
         compress: true,

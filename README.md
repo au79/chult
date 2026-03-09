@@ -54,14 +54,14 @@ pnpm infra:down
 pnpm infra:ecr:push
 ```
 
-- `infra:up` deploys ECR image + service stack and syncs `client/public` to S3.
+- `infra:up` deploys ECR image + service stack, builds client assets, and syncs `client/dist` to S3.
 - Custom domain is enabled only when `HOSTED_ZONE_ID`, `HOSTED_ZONE_NAME`, and `SUBDOMAIN` are all set.
 - Hex state storage resolves to DynamoDB in Lambda, otherwise local file storage unless `HEX_ID_STORAGE` overrides it.
 
 ## Monorepo Layout
 
 ```text
-client/   static assets (player.html, dm.html, css/, js/)
+client/   React client build + static asset output (`index.html`, `dm.html`)
 server/   Hono API + Lambda handler
 infra/    CDK app + deploy scripts
 ```

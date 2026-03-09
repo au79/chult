@@ -308,7 +308,10 @@ rm -f "$TMP_POLICY" "$TMP_POLICY.new"
 
 echo "Updated bucket policy to allow CloudFront distribution $DISTRIBUTION_ID."
 
-aws s3 sync "$ROOT_DIR/client/public" "s3://$EFFECTIVE_SERVICE_BUCKET_NAME" --delete
+echo "Building client static assets..."
+pnpm --dir "$ROOT_DIR" --filter chult-map-client build
+
+aws s3 sync "$ROOT_DIR/client/dist" "s3://$EFFECTIVE_SERVICE_BUCKET_NAME" --delete
 echo "Synced client assets to s3://$EFFECTIVE_SERVICE_BUCKET_NAME"
 
 aws cloudfront create-invalidation \
