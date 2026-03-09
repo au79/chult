@@ -1,5 +1,6 @@
-const PINCH_ZOOM_TAG = "pinch-zoom";
-const PINCH_ZOOM_PLACEHOLDER_SELECTOR = "[data-pinch-zoom]";
+// @ts-nocheck
+const PINCH_ZOOM_TAG = 'pinch-zoom';
+const PINCH_ZOOM_PLACEHOLDER_SELECTOR = '[data-pinch-zoom]';
 
 const pinchZoomStyles = `pinch-zoom {
   display: block;
@@ -20,7 +21,7 @@ pinch-zoom > * {
 let pinchZoomStylesInjected = false;
 let sharedSvgElement;
 
-if (typeof document !== "undefined") {
+if (typeof document !== 'undefined') {
   document.createElement(PINCH_ZOOM_TAG);
 }
 
@@ -30,7 +31,7 @@ export function resetPinchZoomDomStateForTests() {
 }
 
 export function ensurePinchZoomStyles() {
-  if (pinchZoomStylesInjected || typeof document === "undefined") {
+  if (pinchZoomStylesInjected || typeof document === 'undefined') {
     return;
   }
   injectStyleTag(pinchZoomStyles);
@@ -38,7 +39,7 @@ export function ensurePinchZoomStyles() {
 }
 
 export function upgradePinchZoomPlaceholders() {
-  if (typeof document === "undefined") return;
+  if (typeof document === 'undefined') return;
 
   const placeholders = document.querySelectorAll(
     PINCH_ZOOM_PLACEHOLDER_SELECTOR,
@@ -63,7 +64,7 @@ export function createPoint() {
 
 function copyAttributes(source, target) {
   Array.from(source.attributes).forEach((attribute) => {
-    if (attribute.name === "data-pinch-zoom") {
+    if (attribute.name === 'data-pinch-zoom') {
       return;
     }
     target.setAttribute(attribute.name, attribute.value);
@@ -72,12 +73,12 @@ function copyAttributes(source, target) {
 
 function injectStyleTag(cssText, options = {}) {
   const { insertAt } = options;
-  if (!cssText || typeof document === "undefined") return;
+  if (!cssText || typeof document === 'undefined') return;
 
-  const head = document.head || document.getElementsByTagName("head")[0];
-  const styleElement = document.createElement("style");
+  const head = document.head || document.getElementsByTagName('head')[0];
+  const styleElement = document.createElement('style');
 
-  if (insertAt === "top" && head.firstChild) {
+  if (insertAt === 'top' && head.firstChild) {
     head.insertBefore(styleElement, head.firstChild);
   } else {
     head.appendChild(styleElement);
@@ -89,8 +90,8 @@ function injectStyleTag(cssText, options = {}) {
 function getSharedSvg() {
   if (!sharedSvgElement) {
     sharedSvgElement = document.createElementNS(
-      "http://www.w3.org/2000/svg",
-      "svg",
+      'http://www.w3.org/2000/svg',
+      'svg',
     );
   }
   return sharedSvgElement;

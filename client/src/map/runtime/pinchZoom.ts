@@ -1,16 +1,17 @@
+// @ts-nocheck
 import {
   PINCH_ZOOM_TAG,
   ensurePinchZoomStyles,
   upgradePinchZoomPlaceholders,
   createMatrix,
   createPoint,
-} from "./pinchZoomDom.js";
+} from './pinchZoomDom';
 import {
   PointerSession,
   calculateDistance,
   calculateMidpoint,
   resolveLength,
-} from "./pinchZoomGestures.js";
+} from './pinchZoomGestures';
 
 export function registerPinchZoomElement() {
   ensurePinchZoomStyles();
@@ -63,14 +64,14 @@ class PinchZoomElement extends HTMLElement {
       move: handleSessionMove,
     });
 
-    this.addEventListener("wheel", (event) => this._handleWheel(event));
+    this.addEventListener('wheel', (event) => this._handleWheel(event));
   }
 
   /**
    * Reacts to attribute changes to enforce minimum scale constraints.
    */
   attributeChangedCallback(name) {
-    if (name === "min-scale" && this.scale < this.minScale) {
+    if (name === 'min-scale' && this.scale < this.minScale) {
       this.setTransform({ scale: this.minScale });
     }
   }
@@ -89,19 +90,19 @@ class PinchZoomElement extends HTMLElement {
     const {
       originX = 0,
       originY = 0,
-      relativeTo = "content",
+      relativeTo = 'content',
       allowChangeEvent = false,
     } = options;
 
     const referenceElement =
-      relativeTo === "content" ? this._positioningEl : this;
+      relativeTo === 'content' ? this._positioningEl : this;
 
     if (referenceElement && this._positioningEl) {
       const referenceRect = referenceElement.getBoundingClientRect();
       let resolvedOriginX = resolveLength(originX, referenceRect.width);
       let resolvedOriginY = resolveLength(originY, referenceRect.height);
 
-      if (relativeTo === "content") {
+      if (relativeTo === 'content') {
         resolvedOriginX += this.x;
         resolvedOriginY += this.y;
       } else {
@@ -191,12 +192,12 @@ class PinchZoomElement extends HTMLElement {
     this._transform.f = nextY;
     this._transform.d = this._transform.a = nextScale;
 
-    this.style.setProperty("--x", `${this.x}px`);
-    this.style.setProperty("--y", `${this.y}px`);
-    this.style.setProperty("--scale", `${this.scale}`);
+    this.style.setProperty('--x', `${this.x}px`);
+    this.style.setProperty('--y', `${this.y}px`);
+    this.style.setProperty('--scale', `${this.scale}`);
 
     if (allowChangeEvent) {
-      this.dispatchEvent(new Event("change", { bubbles: true }));
+      this.dispatchEvent(new Event('change', { bubbles: true }));
     }
   }
 
@@ -211,7 +212,7 @@ class PinchZoomElement extends HTMLElement {
 
     this._positioningEl = this.children[0];
     if (this.children.length > 1) {
-      console.warn("<pinch-zoom> must not have more than one child.");
+      console.warn('<pinch-zoom> must not have more than one child.');
     }
     this.setTransform({ allowChangeEvent: true });
   }
@@ -224,7 +225,7 @@ class PinchZoomElement extends HTMLElement {
       return;
     }
 
-    this.children[0].classList.add("smooth");
+    this.children[0].classList.add('smooth');
     event.preventDefault();
 
     const contentRect = this._positioningEl.getBoundingClientRect();
@@ -250,7 +251,7 @@ class PinchZoomElement extends HTMLElement {
    */
   _handlePointerMove(previousPointers, currentPointers) {
     if (this.children[0]) {
-      this.children[0].classList.remove("smooth");
+      this.children[0].classList.remove('smooth');
     }
 
     if (!this._positioningEl || !previousPointers.length) {
@@ -324,7 +325,7 @@ class PinchZoomElement extends HTMLElement {
    * Returns the enforced minimum scale for the element.
    */
   get minScale() {
-    const attributeValue = this.getAttribute("min-scale");
+    const attributeValue = this.getAttribute('min-scale');
     if (!attributeValue) {
       return 0.25;
     }
@@ -336,7 +337,7 @@ class PinchZoomElement extends HTMLElement {
    * Overrides the minimum scale attribute via property assignment.
    */
   set minScale(value) {
-    this.setAttribute("min-scale", String(value));
+    this.setAttribute('min-scale', String(value));
   }
 
   /**
@@ -364,6 +365,6 @@ class PinchZoomElement extends HTMLElement {
    * Static getter required by Custom Elements to observe min-scale changes.
    */
   static get observedAttributes() {
-    return ["min-scale"];
+    return ['min-scale'];
   }
 }

@@ -1,22 +1,34 @@
-import { defineConfig } from "vite";
-import react from "@vitejs/plugin-react";
-import { resolve } from "node:path";
+import { defineConfig } from 'vite';
+import react from '@vitejs/plugin-react';
+import { resolve } from 'node:path';
 
 export default defineConfig({
   plugins: [react()],
   server: {
-    host: "127.0.0.1",
+    host: '127.0.0.1',
     port: 5173,
+    proxy: {
+      '/api': {
+        target: 'http://127.0.0.1:9876',
+        changeOrigin: true,
+      },
+    },
   },
   preview: {
-    host: "127.0.0.1",
+    host: '127.0.0.1',
     port: 4173,
+    proxy: {
+      '/api': {
+        target: 'http://127.0.0.1:9876',
+        changeOrigin: true,
+      },
+    },
   },
   build: {
     rollupOptions: {
       input: {
-        reactDm: resolve(__dirname, "react-dm.html"),
-        reactPlayer: resolve(__dirname, "react-player.html"),
+        index: resolve(__dirname, 'index.html'),
+        dm: resolve(__dirname, 'dm.html'),
       },
     },
   },
