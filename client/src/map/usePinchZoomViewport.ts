@@ -9,15 +9,32 @@ type PanzoomChangeEvent = CustomEvent<{
   scale: number;
 }>;
 
+type ViewportMapFrame = {
+  viewportLeft: number;
+  viewportTop: number;
+  viewportWidth: number;
+  viewportHeight: number;
+  mapLeft: number;
+  mapTop: number;
+  mapRight: number;
+  mapBottom: number;
+  mapWidth: number;
+  mapHeight: number;
+};
+
 export function usePinchZoomViewport(
   panzoomElement: HTMLElement | null,
   containerElement: HTMLElement | null,
   fitMapRequest: FitMapRequest,
   onViewportChange: (viewport: ViewportState) => void,
 ) {
-  const MIN_SCALE = 0.2;
+  // Scale 1 is the "fit to viewport" baseline for our `object-fit: contain`
+  // map rendering. Keeping min scale at 1 prevents zooming out to a map that
+  // is smaller than the viewport.
+  const MIN_SCALE = 1;
   const MAX_SCALE = 6;
   const ZOOM_STEP = 0.1;
+  const PAN_CLAMP_EPSILON = 0.01;
 
   const panzoomRef = useRef<ReturnType<typeof Panzoom> | null>(null);
 
@@ -38,9 +55,23 @@ export function usePinchZoomViewport(
 
     const panzoomChangeEventListener = (event: Event) => {
       const detail = (event as PanzoomChangeEvent).detail;
+      const frame = getViewportMapFrame(containerElement);
+      const clampedPan = clampPanToViewport(
+        { x: detail.x, y: detail.y },
+        detail.scale,
+        frame,
+      );
+      if (
+        Math.abs(clampedPan.x - detail.x) > PAN_CLAMP_EPSILON ||
+        Math.abs(clampedPan.y - detail.y) > PAN_CLAMP_EPSILON
+      ) {
+        panzoom.pan(clampedPan.x, clampedPan.y, { force: true });
+        return;
+      }
+
       onViewportChange({
-        x: detail.x,
-        y: detail.y,
+        x: clampedPan.x,
+        y: clampedPan.y,
         scale: detail.scale,
       });
     };
@@ -64,15 +95,15 @@ export function usePinchZoomViewport(
 
         // Focal point is pointer-relative to the viewport (clamped in-bounds),
         // with center fallback if browser does not provide client coordinates.
-        const rect = containerElement.getBoundingClientRect();
+        const frame = getViewportMapFrame(containerElement);
         const relativeX = Number.isFinite(event.clientX)
-          ? event.clientX - rect.left
-          : rect.width / 2;
+          ? event.clientX - frame.viewportLeft
+          : frame.viewportWidth / 2;
         const relativeY = Number.isFinite(event.clientY)
-          ? event.clientY - rect.top
-          : rect.height / 2;
-        const focalX = Math.min(rect.width, Math.max(0, relativeX));
-        const focalY = Math.min(rect.height, Math.max(0, relativeY));
+          ? event.clientY - frame.viewportTop
+          : frame.viewportHeight / 2;
+        const focalX = Math.min(frame.viewportWidth, Math.max(0, relativeX));
+        const focalY = Math.min(frame.viewportHeight, Math.max(0, relativeY));
 
         panzoom.zoom(targetScale, {
           animate: false,
@@ -87,10 +118,27 @@ export function usePinchZoomViewport(
 
       // Trackpad two-axis scroll is treated as pan.
       event.preventDefault();
-      panzoom.pan(-event.deltaX, -event.deltaY, {
-        relative: true,
-        force: true,
-      });
+      const currentPan = panzoom.getPan();
+      const currentScale = panzoom.getScale();
+      const targetX = currentPan.x - event.deltaX;
+      const targetY = currentPan.y - event.deltaY;
+      const frame = getViewportMapFrame(containerElement);
+      const clampedTargetPan = clampPanToViewport(
+        { x: targetX, y: targetY },
+        currentScale,
+        frame,
+      );
+
+      // If we are at the pan boundary, swallow further wheel deltas to avoid
+      // visible bounce/jitter from repeated overscroll corrections.
+      if (
+        Math.abs(clampedTargetPan.x - currentPan.x) <= PAN_CLAMP_EPSILON &&
+        Math.abs(clampedTargetPan.y - currentPan.y) <= PAN_CLAMP_EPSILON
+      ) {
+        return;
+      }
+
+      panzoom.pan(clampedTargetPan.x, clampedTargetPan.y, { force: true });
     };
 
     panzoomElement.addEventListener(
@@ -130,20 +178,8 @@ export function usePinchZoomViewport(
     const fitOptions = { startX: 0, startY: 0, startScale: 1 };
 
     if (fitMapRequest.mode === 'width') {
-      const containerRect = containerElement.getBoundingClientRect();
-      const containerAspectRatio = containerRect.width / containerRect.height;
-      const baseMapWidth =
-        containerAspectRatio > MAP_ASPECT_RATIO
-          ? containerRect.height * MAP_ASPECT_RATIO
-          : containerRect.width;
-      const baseMapHeight =
-        containerAspectRatio > MAP_ASPECT_RATIO
-          ? containerRect.height
-          : containerRect.width / MAP_ASPECT_RATIO;
-      const baseMapLeft = (containerRect.width - baseMapWidth) / 2;
-      const baseMapTop = (containerRect.height - baseMapHeight) / 2;
-      const targetScale = containerRect.width / Math.max(baseMapWidth, 1);
-      const baseMapBottom = baseMapTop + baseMapHeight;
+      const frame = getViewportMapFrame(containerElement);
+      const targetScale = frame.viewportWidth / Math.max(frame.mapWidth, 1);
 
       const currentPan = panzoom.getPan();
       const currentPanY = Number.isFinite(currentPan.y) ? currentPan.y : 0;
@@ -152,7 +188,7 @@ export function usePinchZoomViewport(
         Number.isFinite(currentScaleRaw) && currentScaleRaw > 0
           ? currentScaleRaw
           : 1;
-      const viewportCenterY = containerRect.height / 2;
+      const viewportCenterY = frame.viewportHeight / 2;
       // Convert viewport-center screen Y -> map Y at current transform.
       // screenY = (mapY + panY) * scale  =>  mapY = screenY/scale - panY
       const centerMapY = viewportCenterY / currentScale - currentPanY;
@@ -162,20 +198,15 @@ export function usePinchZoomViewport(
 
       // Clamp so the map spans the viewport vertically when possible:
       // top edge at/above y=0 and bottom edge at/below viewport bottom.
-      const minPanY = containerRect.height / targetScale - baseMapBottom;
-      const maxPanY = -baseMapTop;
-      const clampedPanY =
-        minPanY <= maxPanY
-          ? Math.min(maxPanY, Math.max(minPanY, centeredPanY))
-          : centeredPanY > maxPanY
-            ? maxPanY
-            : minPanY;
-
-      // Panzoom startX/startY are translation units before scale is applied.
-      fitOptions.startX = -baseMapLeft;
+      const clampedPan = clampPanToViewport(
+        { x: -frame.mapLeft, y: centeredPanY },
+        targetScale,
+        frame,
+      );
 
       fitOptions.startScale = targetScale;
-      fitOptions.startY = Number.isFinite(clampedPanY) ? clampedPanY : 0;
+      fitOptions.startX = Number.isFinite(clampedPan.x) ? clampedPan.x : 0;
+      fitOptions.startY = Number.isFinite(clampedPan.y) ? clampedPan.y : 0;
     }
 
     panzoom.setOptions(fitOptions);
@@ -189,3 +220,65 @@ export function usePinchZoomViewport(
     });
   }, [containerElement, fitMapRequest, onViewportChange]);
 }
+
+function clampPanToViewport(
+  pan: { x: number; y: number },
+  scale: number,
+  frame: ViewportMapFrame,
+) {
+  const safeScale = Number.isFinite(scale) && scale > 0 ? scale : 1;
+  const minPanX = frame.viewportWidth / safeScale - frame.mapRight;
+  const maxPanX = -frame.mapLeft;
+  const minPanY = frame.viewportHeight / safeScale - frame.mapBottom;
+  const maxPanY = -frame.mapTop;
+
+  return {
+    x: clampAxis(minPanX, maxPanX, pan.x),
+    y: clampAxis(minPanY, maxPanY, pan.y),
+  };
+}
+
+function clampAxis(minPan: number, maxPan: number, value: number) {
+  if (minPan <= maxPan) {
+    return Math.min(maxPan, Math.max(minPan, value));
+  }
+  // If vertical coverage is impossible at this scale, pin to midpoint so
+  // panning is effectively disabled on this axis instead of drifting.
+  return (minPan + maxPan) / 2;
+}
+
+function getViewportMapFrame(containerElement: HTMLElement): ViewportMapFrame {
+  const rect = containerElement.getBoundingClientRect();
+  const viewportWidth = rect.width;
+  const viewportHeight = rect.height;
+  const containerAspectRatio = viewportWidth / Math.max(viewportHeight, 1);
+  const mapWidth =
+    containerAspectRatio > MAP_ASPECT_RATIO
+      ? viewportHeight * MAP_ASPECT_RATIO
+      : viewportWidth;
+  const mapHeight =
+    containerAspectRatio > MAP_ASPECT_RATIO
+      ? viewportHeight
+      : viewportWidth / MAP_ASPECT_RATIO;
+  const mapLeft = (viewportWidth - mapWidth) / 2;
+  const mapTop = (viewportHeight - mapHeight) / 2;
+
+  return {
+    viewportLeft: rect.left,
+    viewportTop: rect.top,
+    viewportWidth,
+    viewportHeight,
+    mapLeft,
+    mapTop,
+    mapRight: mapLeft + mapWidth,
+    mapBottom: mapTop + mapHeight,
+    mapWidth,
+    mapHeight,
+  };
+}
+
+export const __testables = {
+  clampAxis,
+  clampPanToViewport,
+  getViewportMapFrame,
+};
