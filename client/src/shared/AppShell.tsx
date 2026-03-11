@@ -1,7 +1,8 @@
+import { useState } from 'react';
 import { MapPage } from '../components/MapPage';
 import { useAppUIState } from '../map/useAppUIState';
 import { useMapViewport } from '../map/useMapViewport';
-import type { MapRole, MapUiState } from '../map/types';
+import type { FitMapRequest, MapRole, MapUiState } from '../map/types';
 
 type AppShellProps = {
   role: MapRole;
@@ -9,6 +10,7 @@ type AppShellProps = {
 
 export function AppShell({ role }: AppShellProps) {
   const { viewport, updateViewport } = useMapViewport();
+  const [fitMapRequest, setFitMapRequest] = useState<FitMapRequest>(null);
   const mapUiState: MapUiState = {
     role,
     viewport,
@@ -30,10 +32,19 @@ export function AppShell({ role }: AppShellProps) {
     },
   } = useAppUIState(role);
 
+  const requestFitMap = (mode: NonNullable<FitMapRequest>['mode']) => {
+    setFitMapRequest((previous) => ({
+      mode,
+      // Keep each request unique so repeated clicks on the same action re-run fit.
+      requestId: (previous?.requestId ?? 0) + 1,
+    }));
+  };
+
   return (
     <MapPage
       role={mapUiState.role}
       revealedHexIds={revealedHexIds}
+      fitMapRequest={fitMapRequest}
       hexOpacityPercent={hexOpacityPercent}
       dmMenuOpen={menuOpen}
       resetModalOpen={resetModalOpen}
@@ -42,6 +53,8 @@ export function AppShell({ role }: AppShellProps) {
       onToggleDmMenu={toggleMenu}
       onCloseDmMenu={closeMenu}
       onRequestReset={requestReset}
+      onRequestFitToWindow={() => requestFitMap('window')}
+      onRequestFitToWidth={() => requestFitMap('width')}
       onCancelReset={cancelReset}
       onConfirmReset={confirmReset}
       onHexOpacityPercentChange={setHexOpacityPercent}

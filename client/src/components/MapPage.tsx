@@ -1,10 +1,11 @@
-import type { MapRole, ViewportState } from '../map/types';
+import type { FitMapRequest, MapRole, ViewportState } from '../map/types';
 import { DMControls } from './DMControls';
 import { MapStage } from './MapStage';
 
 type MapPageProps = {
   role: MapRole;
   revealedHexIds: ReadonlySet<string>;
+  fitMapRequest: FitMapRequest;
   hexOpacityPercent: number;
   dmMenuOpen: boolean;
   resetModalOpen: boolean;
@@ -13,6 +14,8 @@ type MapPageProps = {
   onToggleDmMenu: () => void;
   onCloseDmMenu: () => void;
   onRequestReset: () => void;
+  onRequestFitToWindow: () => void;
+  onRequestFitToWidth: () => void;
   onCancelReset: () => void;
   onConfirmReset: () => void;
   onHexOpacityPercentChange: (nextPercent: number) => void;
@@ -21,6 +24,7 @@ type MapPageProps = {
 export function MapPage({
   role,
   revealedHexIds,
+  fitMapRequest,
   hexOpacityPercent,
   dmMenuOpen,
   resetModalOpen,
@@ -29,6 +33,8 @@ export function MapPage({
   onToggleDmMenu,
   onCloseDmMenu,
   onRequestReset,
+  onRequestFitToWindow,
+  onRequestFitToWidth,
   onCancelReset,
   onConfirmReset,
   onHexOpacityPercentChange,
@@ -43,6 +49,8 @@ export function MapPage({
           onToggleMenu={onToggleDmMenu}
           onCloseMenu={onCloseDmMenu}
           onRequestReset={onRequestReset}
+          onRequestFitToWindow={onRequestFitToWindow}
+          onRequestFitToWidth={onRequestFitToWidth}
           onCancelReset={onCancelReset}
           onConfirmReset={onConfirmReset}
           onHexOpacityPercentChange={onHexOpacityPercentChange}
@@ -51,6 +59,7 @@ export function MapPage({
       <MapStage
         role={role}
         revealedHexIds={revealedHexIds}
+        fitMapRequest={fitMapRequest}
         hexOpacityPercent={hexOpacityPercent}
         onToggleHex={onToggleHex}
         onViewportChange={onViewportChange}

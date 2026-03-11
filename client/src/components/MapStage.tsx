@@ -2,12 +2,13 @@ import { useCallback, useMemo, useState, type CSSProperties } from 'react';
 import { mapHexPolygonPoints } from '../map/mapHexPolygonPoints';
 import { useMapImage } from '../map/useMapImage';
 import { usePinchZoomViewport } from '../map/usePinchZoomViewport';
-import type { MapRole, ViewportState } from '../map/types';
+import type { FitMapRequest, MapRole, ViewportState } from '../map/types';
 import { OverlayLayer } from './OverlayLayer';
 
 type MapStageProps = {
   role: MapRole;
   revealedHexIds: ReadonlySet<string>;
+  fitMapRequest: FitMapRequest;
   hexOpacityPercent: number;
   onToggleHex: (hexId: string) => void;
   onViewportChange: (viewport: ViewportState) => void;
@@ -16,6 +17,7 @@ type MapStageProps = {
 export function MapStage({
   role,
   revealedHexIds,
+  fitMapRequest,
   hexOpacityPercent,
   onToggleHex,
   onViewportChange,
@@ -28,7 +30,12 @@ export function MapStage({
     null,
   );
 
-  usePinchZoomViewport(canvasElement, containerElement, onViewportChange);
+  usePinchZoomViewport(
+    canvasElement,
+    containerElement,
+    fitMapRequest,
+    onViewportChange,
+  );
   useMapImage(imageElement);
 
   const setContainerRef = useCallback((element: HTMLDivElement | null) => {

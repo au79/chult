@@ -5,6 +5,8 @@ type DMControlsProps = {
   onToggleMenu: () => void;
   onCloseMenu: () => void;
   onRequestReset: () => void;
+  onRequestFitToWindow: () => void;
+  onRequestFitToWidth: () => void;
   onCancelReset: () => void;
   onConfirmReset: () => void;
   onHexOpacityPercentChange: (nextPercent: number) => void;
@@ -17,6 +19,8 @@ export function DMControls({
   onToggleMenu,
   onCloseMenu,
   onRequestReset,
+  onRequestFitToWindow,
+  onRequestFitToWidth,
   onCancelReset,
   onConfirmReset,
   onHexOpacityPercentChange,
@@ -30,11 +34,25 @@ export function DMControls({
           aria-label="Dungeon master controls"
         >
           <button
-            className="button menu-item reset-action"
+            className="button menu-item"
             role="menuitem"
             onClick={onRequestReset}
           >
             Reset map hexes
+          </button>
+          <button
+            className="button menu-item"
+            role="menuitem"
+            onClick={onRequestFitToWindow}
+          >
+            Fit map to screen
+          </button>
+          <button
+            className="button menu-item"
+            role="menuitem"
+            onClick={onRequestFitToWidth}
+          >
+            Fit map to width
           </button>
           <label className="menu-item opacity-control" htmlFor="hex-opacity">
             <span>
