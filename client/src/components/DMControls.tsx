@@ -1,3 +1,5 @@
+import { t } from '../i18n';
+
 type DMControlsProps = {
   menuOpen: boolean;
   resetModalOpen: boolean;
@@ -31,32 +33,33 @@ export function DMControls({
         <div
           className="dm-menu"
           role="menu"
-          aria-label="Dungeon master controls"
+          aria-label={t('dmControls.menuAriaLabel')}
         >
           <button
             className="button menu-item"
             role="menuitem"
             onClick={onRequestReset}
           >
-            Reset map hexes
+            {t('dmControls.resetMapHexes')}
           </button>
           <button
             className="button menu-item"
             role="menuitem"
             onClick={onRequestFitToWindow}
           >
-            Fit map to screen
+            {t('dmControls.fitMapToScreen')}
           </button>
           <button
             className="button menu-item"
             role="menuitem"
             onClick={onRequestFitToWidth}
           >
-            Fit map to width
+            {t('dmControls.fitMapToWidth')}
           </button>
           <label className="menu-item opacity-control" htmlFor="hex-opacity">
             <span>
-              Hex opacity <span>{hexOpacityPercent}%</span>
+              {t('dmControls.hexOpacityLabel')}{' '}
+              <span>{hexOpacityPercent}%</span>
             </span>
             <input
               id="hex-opacity"
@@ -72,7 +75,11 @@ export function DMControls({
         </div>
         <button
           className={`button menu-toggle${menuOpen ? ' open' : ''}`}
-          aria-label={menuOpen ? 'Close DM controls' : 'Open DM controls'}
+          aria-label={
+            menuOpen
+              ? t('dmControls.closeMenuAriaLabel')
+              : t('dmControls.openMenuAriaLabel')
+          }
           aria-expanded={menuOpen}
           onClick={onToggleMenu}
         >
@@ -99,18 +106,18 @@ export function DMControls({
           className="modal-content"
           role="dialog"
           aria-modal="true"
-          aria-label="Confirm reset"
+          aria-label={t('dmControls.confirmResetAriaLabel')}
         >
-          <p>Reset all currently revealed hexes?</p>
+          <p>{t('dmControls.confirmResetPrompt')}</p>
           <div className="modal-actions">
             <button
               className="button modal-button danger"
               onClick={onConfirmReset}
             >
-              Reset map hexes
+              {t('dmControls.resetMapHexes')}
             </button>
             <button className="button modal-button" onClick={onCancelReset}>
-              Cancel
+              {t('dmControls.cancel')}
             </button>
           </div>
         </div>
