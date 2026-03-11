@@ -1,12 +1,7 @@
 import { createRoot } from 'react-dom/client';
 import { AppShell } from './shared/AppShell';
+import { resolveRoleFromPath } from './shared/routing';
 import '../public/css/index.css';
-
-function resolveRoleFromPath(pathname: string): 'dm' | 'player' {
-  return pathname.endsWith('/dm.html') || pathname === '/dm.html'
-    ? 'dm'
-    : 'player';
-}
 
 const rootElement = document.getElementById('app');
 if (!rootElement) {

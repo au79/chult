@@ -1,38 +1,62 @@
-export function DMControls() {
+type DMControlsProps = {
+  menuOpen: boolean;
+  resetModalOpen: boolean;
+  hexOpacityPercent: number;
+  onToggleMenu: () => void;
+  onCloseMenu: () => void;
+  onRequestReset: () => void;
+  onCancelReset: () => void;
+  onConfirmReset: () => void;
+  onHexOpacityPercentChange: (nextPercent: number) => void;
+};
+
+export function DMControls({
+  menuOpen,
+  resetModalOpen,
+  hexOpacityPercent,
+  onToggleMenu,
+  onCloseMenu,
+  onRequestReset,
+  onCancelReset,
+  onConfirmReset,
+  onHexOpacityPercentChange,
+}: DMControlsProps) {
   return (
     <>
-      <div id="dm-menu-shell" className="dm-menu-shell">
+      <div className={`dm-menu-shell${menuOpen ? ' open' : ''}`}>
         <div
-          id="dm-menu"
           className="dm-menu"
           role="menu"
           aria-label="Dungeon master controls"
         >
           <button
-            id="reset"
             className="button menu-item reset-action"
             role="menuitem"
+            onClick={onRequestReset}
           >
             Reset map hexes
           </button>
           <label className="menu-item opacity-control" htmlFor="hex-opacity">
             <span>
-              Hex opacity <span id="hex-opacity-value">65%</span>
+              Hex opacity <span>{hexOpacityPercent}%</span>
             </span>
             <input
               id="hex-opacity"
               type="range"
               min="10"
               max="100"
-              defaultValue="65"
+              value={hexOpacityPercent}
+              onChange={(event) => {
+                onHexOpacityPercentChange(Number(event.currentTarget.value));
+              }}
             />
           </label>
         </div>
         <button
-          id="menu-toggle"
-          className="button menu-toggle"
-          aria-label="Open DM controls"
-          aria-expanded="false"
+          className={`button menu-toggle${menuOpen ? ' open' : ''}`}
+          aria-label={menuOpen ? 'Close DM controls' : 'Open DM controls'}
+          aria-expanded={menuOpen}
+          onClick={onToggleMenu}
         >
           <span className="menu-toggle-icon" aria-hidden="true">
             <span className="menu-toggle-line"></span>
@@ -41,10 +65,17 @@ export function DMControls() {
           </span>
         </button>
       </div>
+      {menuOpen ? (
+        <div className="dm-menu-dismiss" onClick={onCloseMenu}></div>
+      ) : null}
       <div
-        id="reset-confirm-modal"
-        className="modal-overlay"
-        aria-hidden="true"
+        className={`modal-overlay${resetModalOpen ? ' open' : ''}`}
+        aria-hidden={resetModalOpen ? 'false' : 'true'}
+        onClick={(event) => {
+          if (event.target === event.currentTarget) {
+            onCancelReset();
+          }
+        }}
       >
         <div
           className="modal-content"
@@ -54,10 +85,13 @@ export function DMControls() {
         >
           <p>Reset all currently revealed hexes?</p>
           <div className="modal-actions">
-            <button id="reset-confirm" className="button modal-button danger">
+            <button
+              className="button modal-button danger"
+              onClick={onConfirmReset}
+            >
               Reset map hexes
             </button>
-            <button id="reset-cancel" className="button modal-button">
+            <button className="button modal-button" onClick={onCancelReset}>
               Cancel
             </button>
           </div>
