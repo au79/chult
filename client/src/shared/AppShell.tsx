@@ -8,6 +8,8 @@ type AppShellProps = {
   role: MapRole;
 };
 
+const FIT_REQUEST_ID_CYCLE_SIZE = 10;
+
 export function AppShell({ role }: AppShellProps) {
   const { viewport, updateViewport } = useMapViewport();
   const [fitMapRequest, setFitMapRequest] = useState<FitMapRequest>(null);
@@ -36,7 +38,7 @@ export function AppShell({ role }: AppShellProps) {
     setFitMapRequest((previous) => ({
       mode,
       // Keep each request unique so repeated clicks on the same action re-run fit.
-      requestId: (previous?.requestId ?? 0) + 1,
+      requestId: ((previous?.requestId ?? 0) + 1) % FIT_REQUEST_ID_CYCLE_SIZE,
     }));
   };
 

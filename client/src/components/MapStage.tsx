@@ -1,4 +1,8 @@
 import { useCallback, useMemo, useState, type CSSProperties } from 'react';
+import {
+  MAP_VIEWBOX_HEIGHT,
+  MAP_VIEWBOX_WIDTH,
+} from '../map/mapCoordinateSpace';
 import { mapHexPolygonPoints } from '../map/mapHexPolygonPoints';
 import { useMapImage } from '../map/useMapImage';
 import { usePinchZoomViewport } from '../map/usePinchZoomViewport';
@@ -70,7 +74,7 @@ export function MapStage({
           <svg
             className="map map-overlay"
             xmlns="http://www.w3.org/2000/svg"
-            viewBox="0 0 4476 6000"
+            viewBox={`0 0 ${MAP_VIEWBOX_WIDTH} ${MAP_VIEWBOX_HEIGHT}`}
             preserveAspectRatio="xMidYMid meet"
           >
             {mapHexPolygonPoints.map((points, index) => {

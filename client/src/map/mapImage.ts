@@ -1,3 +1,8 @@
+export type MapImageDimensions = {
+  width: number;
+  height: number;
+};
+
 /**
  * Injects map image data into an image element. Accepts an optional
  * base64 override for tests; otherwise loads the runtime map data module.
@@ -5,12 +10,12 @@
 export async function injectMapImage(
   imageElement: HTMLImageElement,
   imageBase64?: string,
-) {
+): Promise<MapImageDimensions | null> {
   if (typeof imageBase64 === 'string' && imageBase64.length > 0) {
     const bytes = base64ToUint8(imageBase64);
     const objectUrl = createObjectUrl(bytes);
     imageElement.src = objectUrl;
-    return;
+    return loadImageDimensions(imageElement);
   }
 
   try {
@@ -20,9 +25,37 @@ export async function injectMapImage(
     const bytes = base64ToUint8(resolvedImage);
     const objectUrl = createObjectUrl(bytes);
     imageElement.src = objectUrl;
+    return loadImageDimensions(imageElement);
   } catch (error) {
     console.error('Failed to load map image', error);
+    return null;
   }
+}
+
+async function loadImageDimensions(
+  imageElement: HTMLImageElement,
+): Promise<MapImageDimensions | null> {
+  if (imageElement.complete && imageElement.naturalWidth > 0) {
+    return {
+      width: imageElement.naturalWidth,
+      height: imageElement.naturalHeight,
+    };
+  }
+
+  return new Promise((resolve) => {
+    const handleLoad = () => {
+      resolve({
+        width: imageElement.naturalWidth,
+        height: imageElement.naturalHeight,
+      });
+    };
+    const handleError = () => {
+      resolve(null);
+    };
+
+    imageElement.addEventListener('load', handleLoad, { once: true });
+    imageElement.addEventListener('error', handleError, { once: true });
+  });
 }
 
 /**
